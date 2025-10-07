@@ -59,6 +59,6 @@ if __name__ == "__main__":
     train_model(model, criterion, optimizer, x_train, y_train, num_epochs=3)
     print("Model has been trained successfully!\n")
 
-    filename = "mnist_numbers_cnn" if len(sys.argv) <= 1 else sys.argv[1]
+    filename = "mnist_numbers_cnn"
     save_model(model, f"{filename}.ckpt")
     print(f"Model saved to \"{filename}.ckpt\"")
