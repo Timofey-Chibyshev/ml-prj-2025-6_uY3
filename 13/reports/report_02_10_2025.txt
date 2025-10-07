@@ -1,0 +1,4 @@
+1. Изучена статья ( построение PINN моделей ) : Konradsson A. Chalmers University of Technology - Physics-Informed Neural Networks for Charge Dynamics in Air, 2022
+2. Изучена статья ( применение PINN для решения уравнения Баклея Лаверетта ) Data-Free and Data-Efficient Physics Informed Neural Network Approaches to Solve the Buckley-Leverett Problem ", authored by Waleed Diab, Omar Chaabi, Wenjuan Zhang, Muhammad Arif, Shayma Alkobaisi, Mohammed Al Kobaisi
+3. Найден датасет с показателями водонасыщенности на одномерном промежукте в формате .mat ( Matlab ) -> помещен в sources
+
