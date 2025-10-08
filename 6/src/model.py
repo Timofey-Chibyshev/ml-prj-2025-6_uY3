@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 class MnistNumbersCNN(nn.Module):
@@ -24,7 +25,7 @@ class MnistNumbersCNN(nn.Module):
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
-        out = out.reshape(out.size(0), -1)
+        out = torch.flatten(out)
         out = self.dropout(out)
         out = self.full1(out)
         out = self.full2(out)

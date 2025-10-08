@@ -31,7 +31,7 @@ if __name__ == "__main__":
     from save import dir
     from data_loader import loader
 
-    filename = "mnist_numbers_cnn" if len(sys.argv) <= 1 else sys.argv[1] 
+    filename = "mnist_numbers_cnn"
 
     model = MnistNumbersCNN()
     try:

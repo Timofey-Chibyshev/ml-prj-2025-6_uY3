@@ -31,3 +31,9 @@ def visualize(x_train, y_train, x_test, y_test):
         titles_2_show.append('test image [' + str(r) + '] = ' + str(y_test[r]))    
 
     show_images(images_2_show, titles_2_show)
+
+if __name__ == "__main__":
+    from data_loader import loader
+
+    (x_train, y_train), (x_test, y_test) = loader.load_data()
+    visualize(x_train, y_train, x_test, y_test)
