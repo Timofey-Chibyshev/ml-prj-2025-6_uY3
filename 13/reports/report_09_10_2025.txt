@@ -1,0 +1,6 @@
+1. Датасет в формате .mat обработан с использованием методов библиотеки scipy
+2. Построены графики распределения водонасыщенности на координатном промежутке в различные моменты времени ( каталог notebook_model_test/pictures )
+3. С использованием библиотеки tensorflow составлена тензорная сетка <time, x_coord> на основе данных датасета ( Data_and_Model_View_notebook.ipynb )
+4. Составляется нейронная сеть на основе методов библиотеки tensorflow. На случай недостаточной репрезентативности исходных данных изучены методы для дополнительной генерации:
+    https://www.geeksforgeeks.org/data-analysis/different-types-of-data-sampling-methods-and-techniques/
+    https://datasciencegenie.com/latin-hypercube-sampling-vs-monte-carlo-sampling/
