@@ -116,9 +116,3 @@ def preprocess_word_png(path, graylevel):
 
 if __name__ == "__main__":
     preprocess_dataset()
-
-    x_train = np.fromfile("dataset/train-images.idx3-ubyte", dtype=np.uint8)
-    x_train = x_train.reshape(-1, target_height, target_width)
-    
-    y_train = np.fromfile("dataset/train-labels.idx1-U32", dtype='<U32')
-
