@@ -1,0 +1,4 @@
+1-загрузил данные  с платформы Kaggle (13ГБ )
+(https://www.kaggle.com/datasets/uysalserkan/fault-induction-motor-dataset)
+2-понимание и описание данных
+3-начал первичный анализ данных
