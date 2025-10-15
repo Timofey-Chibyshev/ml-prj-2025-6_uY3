@@ -1,0 +1,3 @@
+Занимался написанием кода на основе BERT классификатора.
+Включает в себя: архитектуру сети, загрузчик датасетов и код для обучения и тестов.
+Выполнял на google colab: https://colab.research.google.com/drive/1cWqDrPdfS4Q5RDm8THENjWHeAsZ2mlz3?usp=sharing 
