@@ -1,5 +1,7 @@
 import numpy as np
 from preprocess_dataset import target_height, target_width
+from model import IamWordsCRNN
+import torch
 
 class IamWordsDataLoader(object):
     def __init__(self):
@@ -7,7 +9,7 @@ class IamWordsDataLoader(object):
         self.training_labels_filepath = "dataset/train-labels.idx1-U32"
         self.test_images_filepath = "dataset/t10k-images.idx3-ubyte"
         self.test_labels_filepath = "dataset/t10k-labels.idx1-U32"
-        self.alphabet_filepath = "dataset/alphabet.txt"
+        self.model_filepath = "model/iam_words_crnn.ckpt"
 
     @staticmethod
     def load_images(path):
@@ -29,10 +31,18 @@ class IamWordsDataLoader(object):
     def load_data(self):
         return self.load_train_data(), self.load_test_data() 
     
-    def load_alphabet(self):
-        alphabet = ""
-        with open(self.alphabet_filepath, "r") as file:
-            alphabet = file.read()
-        return alphabet.strip()
+    def load_model(self):
+        model = IamWordsCRNN()
+        try:
+            print("Loading model...")
+            model.load_state_dict(
+                torch.load(self.model_filepath)
+            )
+            print("Model has been loaded successfully!\n")
+            return model
+        except FileNotFoundError:
+            print(f"No {self.model_filepath} file exists!")
+            raise FileNotFoundError
+
 
 loader = IamWordsDataLoader()
