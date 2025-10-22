@@ -1,0 +1,5 @@
+- Сформулирована постановка задачи проекта 
+- Составлен план работы на семестр
+- Предварительно найдены датасеты:
+	- [Kaggle: NASA Turbofan Jet Engine Data Set](https://www.kaggle.com/datasets/behrad3d/nasa-cmaps)
+	- [Kaggle: Credit Card Fraud Detection](https://www.kaggle.com/mlg-ulb/creditcardfraud)
