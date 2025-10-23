@@ -1,0 +1,2 @@
+1. Переписал код, взяв другую архитектуру за основу. Теперь нейросеть использует LSTM вместо BERT, так как для моей задачи по качеству будет достаточно, а процесс написания кода и обучения намного проще. Новый код тут: https://colab.research.google.com/drive/1mAR39kRLVwOQvqiUxnJiPtQRYS6pjgSA?usp=sharing
+2. Провел обучение и получил несколько результатов. Графики и веса тут: https://drive.google.com/drive/folders/1qNOuj2Nh4_KZuj9NT_TKbPtqnOnXJAcY?usp=sharing
