@@ -41,7 +41,7 @@ class IamWordsDataLoader(object):
             print("Model has been loaded successfully!\n")
             return model
         except FileNotFoundError:
-            print(f"No {self.model_filepath} file exists!")
+            print(f"No {self.model_filepath} file exists!\n")
             raise FileNotFoundError
 
 

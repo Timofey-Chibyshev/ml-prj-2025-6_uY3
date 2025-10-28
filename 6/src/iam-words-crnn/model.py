@@ -11,43 +11,43 @@ class IamWordsCRNN(nn.Module):
         super(IamWordsCRNN, self).__init__()
 
         self.convo_layers = nn.Sequential(
-            nn.Conv2d(1, 16, kernel_size=5, stride=1, padding=2),
+            nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 2)),
 
-            nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 1)),
 
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 2)),
 
-            nn.BatchNorm2d(num_features=32),
-
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2, 2)),
+            nn.BatchNorm2d(num_features=64),
 
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2, 2)),
+
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 1)),
         )
 
-        self.hidden_size = 64
-        self.lstm = nn.LSTM(input_size=128, hidden_size=self.hidden_size, 
-                            batch_first=True, bidirectional=True, num_layers=1)
+        self.hidden_size = 128
+        self.lstm = nn.LSTM(input_size=256, hidden_size=self.hidden_size, 
+                            batch_first=True, bidirectional=True, num_layers=2)
 
-        self.linear_layer = nn.Linear(128, (len(alphabet) + 1)) # +1 for blank symbol
+        self.linear_layer = nn.Linear(256, (len(alphabet) + 1)) # +1 for blank symbol
 
         self.softmax = nn.LogSoftmax(dim=2)
 
     def forward(self, x):
         out = self.convo_layers(x)
 
-        assert out.shape[1:] == (128, 1, target_chunks)
+        assert out.shape[1:] == (256, 1, target_chunks)
 
-        out = torch.reshape(out, (-1, 128, target_chunks))
+        out = torch.reshape(out, (-1, 256, target_chunks))
         out = torch.transpose(out, 1, 2)
         out, (hn, cn) = self.lstm(out)
 

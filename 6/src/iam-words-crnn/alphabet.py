@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 def load_alphabet():
     alphabet = ""
@@ -28,3 +29,10 @@ def encode_texts(y):
         y_nums[idx][:len(word)] = chars_to_ints(word)
 
     return y_nums
+
+def greedy_ctc_decoder(nums):
+    res = ints_to_chars(nums)
+    res = res.replace("+", "")
+    # Very basic greedy CTC decoder
+    res = ''.join(ch for ch, _ in itertools.groupby(res))
+    return res
