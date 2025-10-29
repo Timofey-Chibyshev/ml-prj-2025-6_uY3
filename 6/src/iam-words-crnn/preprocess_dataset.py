@@ -1,6 +1,7 @@
 import cv2
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 target_height = 32
 target_chunk_width = 8
@@ -94,16 +95,19 @@ def preprocess_dataset():
     print("Done!")
 
 
-def preprocess_word_png(path, graylevel):
+def preprocess_word_png(path, graylevel=None):
     image = cv2.imread(path)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     rows, cols = image.shape
     factor = target_height / rows
-    image = cv2.resize(image, None, fx=factor, fy=factor)
+    image = cv2.resize(image, None, fx=factor, fy=factor, interpolation=cv2.INTER_AREA)
 
     image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-    _ret, image = cv2.threshold(image, graylevel, 255, type=cv2.THRESH_BINARY)
+    if graylevel is None:
+        _ret, image = cv2.threshold(image, 0, 255, type=cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    else:
+        _ret, image = cv2.threshold(image, graylevel, 255, type=cv2.THRESH_BINARY)
     image = cv2.bitwise_not(image)
 
     rows, cols = image.shape
