@@ -37,7 +37,7 @@ def preprocess_dataset():
             path = f"dataset-raw/dataset/{filename}"
 
             try:
-                image = preprocess_word_png(path, graylevel)
+                image = preprocess_sentence_png(path, graylevel)
 
                 x_images[images_preprocessed] = image
                 y_labels[images_preprocessed] = sentence
@@ -96,7 +96,7 @@ class TooWidePicError(Exception):
     pass
 
 
-def preprocess_word_png(path, graylevel=None):
+def preprocess_sentence_png(path, graylevel=None):
     image = cv2.imread(path)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
