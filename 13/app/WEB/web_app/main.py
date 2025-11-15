@@ -5,11 +5,12 @@ from fastapi.templating import Jinja2Templates
 import os
 import sys
 
+#from twisted.mail.scripts.mailmail import success
+
 # Добавляем путь к родительской директории для импорта модулей
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from DataManage.data_prep import DataManager
-from DataManage.Client_ClickHouse import client
+from DataManage.DataLoadMain import data_main
 
 app = FastAPI(title="CSV Uploader")
 
@@ -40,8 +41,8 @@ async def upload_csv(
             f.write(content)
 
         # Обрабатываем данные
-        data_manager = DataManager(client, database='db')
-        success = data_manager.process_csv_data(file_path, num_collocation_points=num_points)
+        success = data_main(file_path, num_collocation_points=num_points)
+
 
         # Удаляем временный файл
         os.remove(file_path)
