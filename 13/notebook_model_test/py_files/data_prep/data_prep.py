@@ -1,16 +1,18 @@
 import numpy as np
 import pandas as pd
-from clickhouse_driver import Client
 from pyDOE import lhs
 import queries
+from Client_ClickHouse import client
+
 
 def get_values_from_csv(filepath):
     try:
         df = pd.read_csv(filepath)
 
-        save_to_clickhouse(df, host='localhost', port=9000,
-                           user='user', password='123',
-                           database='db', table_name="TableTrainData", type="train_points")
+        save_to_clickhouse(df, client,
+                           database='db',
+                           table_name="TableTrainData",
+                           type="train_points")
 
         generate_data(df, N_r=300)
 
@@ -41,9 +43,10 @@ def generate_data(data, N_r = 300):
 
         X_collocate = lb + (ub - lb) * lhs(2, N_r)
 
-        save_to_clickhouse(X_collocate, host='localhost', port=9000,
-                           user='user', password='123',
-                           database='db', table_name="CollocatePointsTable", type="collocate_points")
+        save_to_clickhouse(X_collocate, client,
+                           database='db',
+                           table_name="CollocatePointsTable",
+                           type="collocate_points")
 
         return True
 
@@ -58,16 +61,10 @@ def generate_data(data, N_r = 300):
 
 
 
-def save_to_clickhouse(data, host='localhost', port=9000,
-                       user='user', password='123',
+def save_to_clickhouse(data, client,
                        database='db', table_name="TableTrainData", type = "train_points"):
     try:
-        client = Client(
-            host=host,
-            port=port,
-            user=user,
-            password=password
-        )
+
 
         print("Успешное подключение к ClickHouse")
 
