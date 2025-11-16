@@ -28,7 +28,7 @@ class TrainingVisualizer:
         plt.figure(figsize=(12, 8))
 
         # Полупрозрачная область для общих потерь
-        plt.fill_between(self.epochs, self.total_losses, alpha=0.3, color='blue', label='Общие потери')
+        plt.fill_between(self.epochs, self.total_losses, alpha=0.3, color='deepskyblue', label='Общие потери')
         plt.plot(self.epochs, self.total_losses, 'b-', linewidth=2, label='Общие потери')
 
         # Потери данных

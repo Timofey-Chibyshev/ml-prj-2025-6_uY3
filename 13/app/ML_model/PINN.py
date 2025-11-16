@@ -1,23 +1,38 @@
 import tensorflow as tf
+import math
 
-def init_model_params():
+
+def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer="Adam"):
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=1e-2,
         decay_steps=2000,
         decay_rate=0.95
     )
 
-    tf_optimizer = tf.keras.optimizers.Adam(
-        learning_rate=lr_schedule,
-        beta_1=0.9,
-        beta_2=0.999,
-        epsilon=1e-7
-    )
+    # Выбор оптимизатора
+    if optimizer == "LBFGS":
+        # Для LBFGS используем стандартный оптимизатор с настройками для L-BFGS
+        tf_optimizer = tf.keras.optimizers.Adam(
+            learning_rate=lr_schedule,
+            beta_1=0.9,
+            beta_2=0.999,
+            epsilon=1e-7
+        )
+    else:  # Adam по умолчанию
+        tf_optimizer = tf.keras.optimizers.Adam(
+            learning_rate=lr_schedule,
+            beta_1=0.9,
+            beta_2=0.999,
+            epsilon=1e-7
+        )
 
-    # Improved network architecture
-    layers = [2] + [10] * 10 + [1]
+    # Архитектура сети
+    layers = [2]
+    for i in range(num_layers):
+        layers.append(num_perceptrons)
+    layers.append(1)
 
-    tf_epochs = 5000
+    tf_epochs = num_epoch
 
     return lr_schedule, tf_optimizer, layers, tf_epochs
 
@@ -28,6 +43,7 @@ class PINN(object):
         self.layers = layers
         self.u_model = tf.keras.Sequential()
         self.u_model.add(tf.keras.layers.InputLayer(input_shape=(layers[0],)))
+        self.best_loss = math.inf
 
         # нормируем входной слой
         self.u_model.add(tf.keras.layers.Lambda(
@@ -138,6 +154,8 @@ class PINN(object):
         # адамом решено
         self.logger.log_train_opt("Adam")
 
+        best_loss = math.inf
+
         for epoch in range(tf_epochs):
 
             # по эпохам будем менять вес ошибок, а то на последних он ближе к диффуру чем к г.у.
@@ -148,9 +166,17 @@ class PINN(object):
 
             total_loss, data_loss, pde_loss = self.train_step(X_u, u, loss_weights)
 
+            current_loss = total_loss.numpy()
+            if current_loss < best_loss:
+                best_loss = current_loss
+
+
+
             if epoch % self.logger.frequency == 0:
                 custom_info = f"data_loss: {data_loss:.2e}, pde_loss: {pde_loss:.2e}"
                 self.logger.log_train_epoch(epoch, total_loss, custom_info)
+
+        return {"best_loss": best_loss}
 
 
     def predict(self, X):
