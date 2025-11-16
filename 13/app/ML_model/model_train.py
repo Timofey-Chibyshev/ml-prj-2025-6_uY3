@@ -1,34 +1,59 @@
-from Logger import Logger  # Импортируем обычный логгер
+from Logger import Logger
 from DataLoadFromDB import PINNDataLoader
 from Client_ClickHouse import client
 from PINN import PINN
 from PINN import init_model_params
+import traceback
 
-def main():
-    # Инициализация загрузчика данных
-    data_loader = PINNDataLoader(client)
 
-    # Загрузка данных из ClickHouse
-    X_u_train, u_train = data_loader.load_training_data()
-    X_f_train = data_loader.load_collocation_points()
+def train_pinn_model(num_layers, num_perceptrons, num_epoch, optimizer):
+    try:
+        # Инициализация загрузчика данных
+        data_loader = PINNDataLoader(client)
 
-    if X_u_train is None or u_train is None or X_f_train is None:
-        print("Ошибка при загрузке данных из ClickHouse")
-        return
+        # Загрузка данных из ClickHouse
+        X_u_train, u_train = data_loader.load_training_data()
+        X_f_train = data_loader.load_collocation_points()
 
-    # Вычисление границ области
-    lb, ub = data_loader.get_domain_bounds(X_u_train, X_f_train)
+        if X_u_train is None or u_train is None or X_f_train is None:
+            error_msg = "Ошибка при загрузке данных из ClickHouse"
+            return {"status": "error", "message": error_msg}
 
-    print(f"Границы области: lb={lb}, ub={ub}")
-    print(f"Размерности: X_u_train {X_u_train.shape}, u_train {u_train.shape}, X_f_train {X_f_train.shape}")
+        # Вычисление границ области
+        lb, ub = data_loader.get_domain_bounds(X_u_train, X_f_train)
 
-    # Параметры обучения
-    lr_schedule, tf_optimizer, layers, tf_epochs = init_model_params()
-    logger = Logger(frequency=200)
+        print(f"Границы области: lb={lb}, ub={ub}")
+        print(f"Размерности: X_u_train {X_u_train.shape}, u_train {u_train.shape}, X_f_train {X_f_train.shape}")
 
-    # Создание и обучение модели
-    pinn = PINN(layers, tf_optimizer, logger, X_f_train, lb, ub)
-    pinn.fit(X_u_train, u_train, tf_epochs)
+        # Параметры обучения с учетом выбранного оптимизатора
+        lr_schedule, tf_optimizer, layers, tf_epochs = init_model_params(
+            num_layers, num_perceptrons, num_epoch, optimizer
+        )
+        logger = Logger(frequency=200)
 
-if __name__ == "__main__":
-    main()
+        # Создание и обучение модели
+        pinn = PINN(layers, tf_optimizer, logger, X_f_train, lb, ub)
+        training_results = pinn.fit(X_u_train, u_train, tf_epochs)
+
+        # Получаем график и статистику обучения
+        training_plot = logger.get_training_plot()
+
+        # Упрощенные результаты - только основные параметры
+        results = {
+            "status": "success",
+            "message": "ML модель успешно обучена",
+            "training_epochs": tf_epochs,
+            "model_layers": len(layers),
+            "num_perceptrons": num_perceptrons,
+            "optimizer": optimizer,
+            "best_loss": float(training_results["best_loss"]),
+            "training_plot": training_plot
+        }
+
+        return results
+
+    except Exception as e:
+        error_msg = f"Ошибка при выполнении ML модели: {str(e)}"
+        print(error_msg)
+        traceback.print_exc()
+        return {"status": "error", "message": error_msg}

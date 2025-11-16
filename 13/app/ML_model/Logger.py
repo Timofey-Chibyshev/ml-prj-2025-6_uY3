@@ -2,6 +2,8 @@ import time
 from datetime import datetime
 from Client_ClickHouse import client
 import queries
+from visualization import TrainingVisualizer
+
 
 class Logger(object):
     def __init__(self, frequency=100, database='db', table_name="TableEpochLog", client=client):
@@ -10,6 +12,7 @@ class Logger(object):
         self.client = client
         self.database = database
         self.table_name = table_name
+        self.visualizer = TrainingVisualizer()
 
         # Создаем таблицу при инициализации
         self._create_table()
@@ -34,19 +37,22 @@ class Logger(object):
             print(
                 f"{'nt_epoch' if is_iter else 'tf_epoch'} = {epoch:6d}  elapsed = {self.__get_elapsed()}  loss = {loss:.4e} {custom}")
 
+            # Парсим custom строку чтобы извлечь data_loss и pde_loss
+            data_loss = 0.0
+            pde_loss = 0.0
+            if "data_loss" in custom and "pde_loss" in custom:
+                parts = custom.split(",")
+                for part in parts:
+                    if "data_loss" in part:
+                        data_loss = float(part.split(":")[1].strip().split()[0])
+                    elif "pde_loss" in part:
+                        pde_loss = float(part.split(":")[1].strip().split()[0])
+
+            # Добавляем данные в визуализатор
+            self.visualizer.add_epoch_data(epoch, float(loss), data_loss, pde_loss)
+
             # Логируем в ClickHouse
             try:
-                # Парсим custom строку чтобы извлечь data_loss и pde_loss
-                data_loss = 0.0
-                pde_loss = 0.0
-                if "data_loss" in custom and "pde_loss" in custom:
-                    parts = custom.split(",")
-                    for part in parts:
-                        if "data_loss" in part:
-                            data_loss = float(part.split(":")[1].strip())
-                        elif "pde_loss" in part:
-                            pde_loss = float(part.split(":")[1].strip())
-
                 insert_query = queries.insert_query(self.database, self.table_name, epoch, time.time(), self.start_time,
                                                     loss, data_loss, pde_loss)
                 self.client.execute(insert_query)
@@ -59,3 +65,11 @@ class Logger(object):
     def log_train_end(self, epoch, custom=""):
         print("==================")
         print(f"Training finished (epoch {epoch}): duration = {self.__get_elapsed()} {custom}")
+
+    def get_training_plot(self) -> str:
+        """Получение графика обучения в base64 формате"""
+        return self.visualizer.create_training_plot()
+
+    def get_training_stats(self) -> dict:
+        """Получение статистики обучения"""
+        return self.visualizer.get_training_stats()

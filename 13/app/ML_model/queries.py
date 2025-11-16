@@ -24,3 +24,7 @@ def insert_query(database, table_name, epoch, time, start_time, loss, data_loss,
                     (epoch, elapsed_seconds, total_loss, data_loss, pde_loss, weights_data_loss, weights_pde_loss)
                     VALUES ({epoch}, {time - start_time}, {float(loss)}, {data_loss}, {pde_loss}, 1.0, 1.0)
                     """
+
+def clear_table_train_data(database, table_name):
+    return f"TRUNCATE TABLE {database}.{table_name}"
+

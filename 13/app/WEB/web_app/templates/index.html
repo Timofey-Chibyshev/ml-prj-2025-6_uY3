@@ -5,27 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSV Uploader and ML Runner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-        .btn {
-            margin-right: 10px;
-        }
-        .loading-text {
-            color: #0d6efd;
-            font-weight: 500;
-        }
-    </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4 text-center">Загрузка CSV данных и запуск ML модели</h1>
+        <h1 class="mb-4">Загрузка CSV данных и запуск ML модели</h1>
 
         {% if message %}
         <div class="alert alert-{{ message_type }} alert-dismissible fade show" role="alert">
@@ -56,7 +39,7 @@
                         <div class="spinner-border spinner-border-sm text-primary" role="status">
                             <span class="visually-hidden">Загрузка...</span>
                         </div>
-                        <span class="ms-2 loading-text">Загрузка и обработка данных...</span>
+                        <span class="ms-2">Загрузка и обработка данных...</span>
                     </div>
                 </form>
             </div>
@@ -81,7 +64,7 @@
                         <div class="spinner-border spinner-border-sm text-warning" role="status">
                             <span class="visually-hidden">Загрузка...</span>
                         </div>
-                        <span class="ms-2 loading-text">Обновление точек коллокации...</span>
+                        <span class="ms-2">Обновление точек коллокации...</span>
                     </div>
                     <small class="form-text text-muted">Это обновит только точки коллокации без изменения тренировочных данных.</small>
                 </form>
@@ -97,6 +80,33 @@
             <div class="card-body">
                 {% if data_loaded %}
                 <form action="/run_ml/" method="post" id="mlForm">
+                    <!-- Параметры ML модели -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="num_layers" class="form-label">Количество слоев:</label>
+                            <input type="number" class="form-control" id="num_layers" name="num_layers" value="4" min="1" max="10" required>
+                            <div class="form-text">1-10 слоев</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="num_perceptrons" class="form-label">Нейронов в слое:</label>
+                            <input type="number" class="form-control" id="num_perceptrons" name="num_perceptrons" value="50" min="10" max="200" required>
+                            <div class="form-text">10-200 нейронов</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="num_epoch" class="form-label">Количество эпох:</label>
+                            <input type="number" class="form-control" id="num_epoch" name="num_epoch" value="10000" min="1000" max="100000" step="1000" required>
+                            <div class="form-text">1000-100000 эпох</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="optimizer" class="form-label">Оптимизатор:</label>
+                            <select class="form-select" id="optimizer" name="optimizer" required>
+                                <option value="Adam" selected>Adam</option>
+                                <option value="LBFGS">LBFGS</option>
+                            </select>
+                            <div class="form-text">Выбор алгоритма оптимизации</div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-success" id="mlButton">
                         Запустить ML модель (PINN)
                     </button>
@@ -104,7 +114,7 @@
                         <div class="spinner-border spinner-border-sm text-success" role="status">
                             <span class="visually-hidden">Загрузка...</span>
                         </div>
-                        <span class="ms-2 loading-text">ML модель выполняется... Это может занять несколько минут.</span>
+                        <span class="ms-2">ML модель выполняется... Это может занять несколько минут.</span>
                     </div>
                     <small class="form-text text-muted">Данные загружены. Можно запускать Physics-Informed Neural Network.</small>
                 </form>
@@ -130,64 +140,31 @@
                 </div>
                 {% endif %}
 
-                <!-- Статистика обучения -->
-                {% if ml_results.training_stats %}
+                <!-- Основные результаты -->
                 <div class="mb-4">
-                    <h6>Статистика обучения</h6>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <strong>Финальные потери:</strong>
-                            <ul class="list-unstyled">
-                                <li>Общие: {{ "%.2e"|format(ml_results.training_stats.final_total_loss) }}</li>
-                                <li>Данные: {{ "%.2e"|format(ml_results.training_stats.final_data_loss) }}</li>
-                                <li>Уравнение: {{ "%.2e"|format(ml_results.training_stats.final_pde_loss) }}</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Минимальные потери:</strong>
-                            <ul class="list-unstyled">
-                                <li>Общие: {{ "%.2e"|format(ml_results.training_stats.min_total_loss) }}</li>
-                                <li>Данные: {{ "%.2e"|format(ml_results.training_stats.min_data_loss) }}</li>
-                                <li>Уравнение: {{ "%.2e"|format(ml_results.training_stats.min_pde_loss) }}</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Общая информация:</strong>
-                            <ul class="list-unstyled">
-                                <li>Эпох: {{ ml_results.training_epochs }}</li>
-                                <li>Слоев: {{ ml_results.model_layers }}</li>
-                                <li>Лучшие потери: {{ "%.2e"|format(ml_results.best_loss) }}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Детальная информация -->
-                <div class="mt-3">
-                    <h6>Детальная информация</h6>
+                    <h6>Основные результаты</h6>
                     <div class="table-responsive">
-                        <table class="table table-sm">
+                        <table class="table table-bordered">
                             <tbody>
                                 <tr>
-                                    <th>Границы области (lb):</th>
-                                    <td>{{ ml_results.domain_bounds.lb }}</td>
+                                    <th>Количество эпох:</th>
+                                    <td>{{ ml_results.training_epochs }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Границы области (ub):</th>
-                                    <td>{{ ml_results.domain_bounds.ub }}</td>
+                                    <th>Количество слоев:</th>
+                                    <td>{{ ml_results.model_layers }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Размер X_u_train:</th>
-                                    <td>{{ ml_results.data_shapes.X_u_train }}</td>
+                                    <th>Количество перцептронов в слое:</th>
+                                    <td>{{ ml_results.num_perceptrons }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Размер u_train:</th>
-                                    <td>{{ ml_results.data_shapes.u_train }}</td>
+                                    <th>Оптимизатор:</th>
+                                    <td>{{ ml_results.optimizer }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Размер X_f_train:</th>
-                                    <td>{{ ml_results.data_shapes.X_f_train }}</td>
+                                    <th>Лучшая ошибка:</th>
+                                    <td>{{ "%.2e"|format(ml_results.best_loss) }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -230,14 +207,34 @@
             spinner.style.display = 'block';
         });
 
-        // Автоматическое скрытие alert через 5 секунд
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
+        // Валидация параметров ML
+        document.getElementById('num_layers')?.addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 1) this.value = 1;
+            if (value > 10) this.value = 10;
+        });
+
+        document.getElementById('num_perceptrons')?.addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 10) this.value = 10;
+            if (value > 200) this.value = 200;
+        });
+
+        document.getElementById('num_epoch')?.addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 1000) this.value = 1000;
+            if (value > 100000) this.value = 100000;
+            // Округление до ближайшей 1000
+            this.value = Math.round(value / 1000) * 1000;
+        });
+
+        // Валидация оптимизатора
+        document.getElementById('optimizer')?.addEventListener('change', function() {
+            const value = this.value;
+            if (value !== "Adam" && value !== "LBFGS") {
+                this.value = "Adam"; // Значение по умолчанию
+            }
+        });
     </script>
 </body>
 </html>
