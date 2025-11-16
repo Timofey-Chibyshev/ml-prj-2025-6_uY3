@@ -2,7 +2,7 @@ import tensorflow as tf
 import math
 
 
-def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer="Adam"):
+def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer):
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=1e-2,
         decay_steps=2000,
@@ -10,21 +10,14 @@ def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer="Adam"):
     )
 
     # Выбор оптимизатора
-    if optimizer == "LBFGS":
-        # Для LBFGS используем стандартный оптимизатор с настройками для L-BFGS
-        tf_optimizer = tf.keras.optimizers.Adam(
+
+
+    tf_optimizer = tf.keras.optimizers.Adam(
             learning_rate=lr_schedule,
             beta_1=0.9,
             beta_2=0.999,
             epsilon=1e-7
-        )
-    else:  # Adam по умолчанию
-        tf_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=lr_schedule,
-            beta_1=0.9,
-            beta_2=0.999,
-            epsilon=1e-7
-        )
+    )
 
     # Архитектура сети
     layers = [2]

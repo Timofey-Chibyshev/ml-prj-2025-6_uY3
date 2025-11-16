@@ -83,25 +83,24 @@
                     <!-- Параметры ML модели -->
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="num_layers" class="form-label">Количество слоев:</label>
-                            <input type="number" class="form-control" id="num_layers" name="num_layers" value="4" min="1" max="10" required>
-                            <div class="form-text">1-10 слоев</div>
+                            <label for="num_layers" class="form-label">Количество промежуточных слоев:</label>
+                            <input type="number" class="form-control" id="num_layers" name="num_layers" value="10" min="1" max="50" required>
+                            <div class="form-text">1-50 слоев</div>
                         </div>
                         <div class="col-md-3">
                             <label for="num_perceptrons" class="form-label">Нейронов в слое:</label>
-                            <input type="number" class="form-control" id="num_perceptrons" name="num_perceptrons" value="50" min="10" max="200" required>
-                            <div class="form-text">10-200 нейронов</div>
+                            <input type="number" class="form-control" id="num_perceptrons" name="num_perceptrons" value="10" min="1" max="200" required>
+                            <div class="form-text">1-200 нейронов</div>
                         </div>
                         <div class="col-md-3">
                             <label for="num_epoch" class="form-label">Количество эпох:</label>
-                            <input type="number" class="form-control" id="num_epoch" name="num_epoch" value="10000" min="1000" max="100000" step="1000" required>
-                            <div class="form-text">1000-100000 эпох</div>
+                            <input type="number" class="form-control" id="num_epoch" name="num_epoch" value="5000" min="100" max="100000" step="100" required>
+                            <div class="form-text">100-100000 эпох</div>
                         </div>
                         <div class="col-md-3">
                             <label for="optimizer" class="form-label">Оптимизатор:</label>
                             <select class="form-select" id="optimizer" name="optimizer" required>
                                 <option value="Adam" selected>Adam</option>
-                                <option value="LBFGS">LBFGS</option>
                             </select>
                             <div class="form-text">Выбор алгоритма оптимизации</div>
                         </div>
@@ -211,7 +210,7 @@
         document.getElementById('num_layers')?.addEventListener('change', function() {
             const value = parseInt(this.value);
             if (value < 1) this.value = 1;
-            if (value > 10) this.value = 10;
+            if (value > 50) this.value = 50;
         });
 
         document.getElementById('num_perceptrons')?.addEventListener('change', function() {
@@ -222,19 +221,12 @@
 
         document.getElementById('num_epoch')?.addEventListener('change', function() {
             const value = parseInt(this.value);
-            if (value < 1000) this.value = 1000;
+            if (value < 100) this.value = 100;
             if (value > 100000) this.value = 100000;
             // Округление до ближайшей 1000
             this.value = Math.round(value / 1000) * 1000;
         });
 
-        // Валидация оптимизатора
-        document.getElementById('optimizer')?.addEventListener('change', function() {
-            const value = this.value;
-            if (value !== "Adam" && value !== "LBFGS") {
-                this.value = "Adam"; // Значение по умолчанию
-            }
-        });
     </script>
 </body>
 </html>
