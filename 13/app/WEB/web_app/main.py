@@ -32,6 +32,8 @@ data_loaded = False
 last_uploaded_file_path = None
 
 
+app.mount("/static", StaticFiles(directory="./static"), name="static")
+
 def clear_temp_directory():
     try:
         files = glob.glob(os.path.join(temp_dir, "*"))
@@ -155,7 +157,9 @@ async def run_ml_model(
     num_layers: int = Form(4),
     num_perceptrons: int = Form(50),
     num_epoch: int = Form(10000),
-    optimizer: str = Form("Adam")  # Добавлен параметр оптимизатора
+    optimizer: str = Form("Adam"),
+    loss_weights_config: str = Form("")
+        # Добавлен параметр оптимизатора
 ):
     global data_loaded
 
@@ -175,8 +179,11 @@ async def run_ml_model(
             "num_layers": num_layers,
             "num_perceptrons": num_perceptrons,
             "num_epoch": num_epoch,
-            "optimizer": optimizer  # Передаем выбранный оптимизатор
+            "optimizer": optimizer,
+            "loss_weights_config": loss_weights_config # Передаем выбранный оптимизатор
         }
+
+        print(loss_weights_config)
 
         # Отправляем запрос к ML сервису с параметрами
         async with httpx.AsyncClient() as client:

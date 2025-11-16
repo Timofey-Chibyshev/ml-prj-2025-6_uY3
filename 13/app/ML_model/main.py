@@ -16,7 +16,8 @@ class MLParams(BaseModel):
     num_layers: int = 4
     num_perceptrons: int = 50
     num_epoch: int = 10000
-    optimizer: str = "Adam"  # Добавлен параметр оптимизатора
+    optimizer: str = "Adam"
+    loss_weights_config: str = ""  # Добавлен параметр конфигурации весов ошибок
 
 @app.post("/run_ml_model")
 async def run_ml_model(params: MLParams):
@@ -30,13 +31,15 @@ async def run_ml_model(params: MLParams):
 
     try:
         print(f"Запуск ML модели с параметрами: {params.num_layers} слоев, {params.num_perceptrons} нейронов, {params.num_epoch} эпох, оптимизатор: {params.optimizer}")
+        print(f"Конфигурация весов ошибок: {params.loss_weights_config}")
 
         # Запускаем обучение модели с переданными параметрами
         results = train_pinn_model(
             num_layers=params.num_layers,
             num_perceptrons=params.num_perceptrons,
             num_epoch=params.num_epoch,
-            optimizer=params.optimizer  # Передаем оптимизатор
+            optimizer=params.optimizer,
+            loss_weights_config=params.loss_weights_config  # Передаем конфигурацию весов
         )
 
         if results["status"] == "error":
@@ -66,4 +69,3 @@ async def health_check():
         "service": "ML",
         "ml_running": ml_status["is_running"]
     }
-

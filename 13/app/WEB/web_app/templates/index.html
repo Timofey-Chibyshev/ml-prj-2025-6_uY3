@@ -106,6 +106,21 @@
                         </div>
                     </div>
 
+                    <!-- Конфигурация весов ошибок -->
+                    <div class="mb-4">
+                        <label for="loss_weights_config" class="form-label">Конфигурация весов ошибок:</label>
+                        <textarea class="form-control" id="loss_weights_config" name="loss_weights_config" rows="4"
+                                  placeholder='Пример: 0:10.0,1.0; 1000:3.0,1.0; 5000:1.0,1.0&#10;Формат: эпоха:вес_данных,вес_уравнения'></textarea>
+                        <div class="form-text">
+                            Настройте веса ошибок для разных этапов обучения. Формат: "эпоха:вес_данных,вес_уравнения".<br>
+                            Пример: "0:10.0,1.0; 1000:3.0,1.0; 5000:1.0,1.0" означает:<br>
+                            - С 0 по 1000 эпоху: вес данных=10.0, вес уравнения=1.0<br>
+                            - С 1000 по 5000 эпоху: вес данных=3.0, вес уравнения=1.0<br>
+                            - После 5000 эпох: вес данных=1.0, вес уравнения=1.0<br>
+                            Оставьте пустым для использования значений по умолчанию.
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-success" id="mlButton">
                         Запустить ML модель (PINN)
                     </button>
@@ -165,6 +180,12 @@
                                     <th>Лучшая ошибка:</th>
                                     <td>{{ "%.2e"|format(ml_results.best_loss) }}</td>
                                 </tr>
+                                {% if ml_results.loss_weights_used %}
+                                <tr>
+                                    <th>Использованные веса ошибок:</th>
+                                    <td>{{ ml_results.loss_weights_used }}</td>
+                                </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -227,6 +248,12 @@
             this.value = Math.round(value / 1000) * 1000;
         });
 
+        // Пример конфигурации весов ошибок
+        document.getElementById('loss_weights_config')?.addEventListener('focus', function() {
+            if (!this.value) {
+                this.value = '0:10.0,1.0; 1000:3.0,1.0; 5000:1.0,1.0';
+            }
+        });
     </script>
 </body>
 </html>

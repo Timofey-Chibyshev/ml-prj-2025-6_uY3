@@ -10,13 +10,11 @@ def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer):
     )
 
     # Выбор оптимизатора
-
-
     tf_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=lr_schedule,
-            beta_1=0.9,
-            beta_2=0.999,
-            epsilon=1e-7
+        learning_rate=lr_schedule,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-7
     )
 
     # Архитектура сети
@@ -29,6 +27,55 @@ def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer):
 
     return lr_schedule, tf_optimizer, layers, tf_epochs
 
+
+def parse_loss_weights_config(config_str):
+    """
+    Парсит конфигурацию весов ошибок из строки
+    Формат: "эпоха:вес_данных,вес_уравнения; эпоха:вес_данных,вес_уравнения; ..."
+    Пример: "0:10.0,1.0; 1000:3.0,1.0; 5000:1.0,1.0"
+    """
+    if not config_str:
+        return None
+
+    schedule = []
+    try:
+        entries = config_str.split(';')
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+            epoch_part, weights_part = entry.split(':')
+            epoch = int(epoch_part.strip())
+            weights_str = weights_part.split(',')
+            data_weight = float(weights_str[0].strip())
+            pde_weight = float(weights_str[1].strip())
+            schedule.append((epoch, [data_weight, pde_weight]))
+
+        # Сортируем по эпохе
+        schedule.sort(key=lambda x: x[0])
+        return schedule
+    except Exception as e:
+        print(f"Ошибка парсинга конфигурации весов: {e}. Используются веса по умолчанию.")
+        return None
+
+
+def get_loss_weights_for_epoch(epoch, loss_weights_schedule):
+    """
+    Возвращает веса ошибок для заданной эпохи на основе расписания
+    """
+    if not loss_weights_schedule:
+        # Значения по умолчанию
+        return [1.0, 1.0]
+
+    # Находим последний подходящий интервал
+    current_weights = [1.0, 1.0]  # значения по умолчанию
+    for threshold_epoch, weights in loss_weights_schedule:
+        if epoch >= threshold_epoch:
+            current_weights = weights
+        else:
+            break
+
+    return current_weights
 
 
 class PINN(object):
@@ -50,10 +97,6 @@ class PINN(object):
                 kernel_initializer=tf.keras.initializers.GlorotNormal(),
                 bias_initializer='zeros'
             ))
-
-        #    self.u_model.add(tf.keras.layers.Dense(
-        #      width, activation=tf.nn.tanh,
-        #      kernel_initializer='glorot_normal'))
 
         # Последний будет ф-ией relu ( шоб ниже нуля не упало )
         self.u_model.add(tf.keras.layers.Dense(
@@ -137,12 +180,19 @@ class PINN(object):
         # полученное зн-е ур-я после предикта : u_t + f(u)_x = 0
         return u_t + f_u_x
 
-    def fit(self, X_u, u, tf_epochs, loss_weights=None):
+    def fit(self, X_u, u, tf_epochs, loss_weights_config=None):
 
         self.logger.log_train_start(self)
 
         X_u = tf.convert_to_tensor(X_u, dtype=self.dtype)
         u = tf.convert_to_tensor(u, dtype=self.dtype)
+
+        # Парсим конфигурацию весов ошибок
+        loss_weights_schedule = parse_loss_weights_config(loss_weights_config)
+        if loss_weights_schedule:
+            print(f"Используется пользовательское расписание весов: {loss_weights_schedule}")
+        else:
+            print("Используется расписание весов по умолчанию")
 
         # адамом решено
         self.logger.log_train_opt("Adam")
@@ -151,28 +201,20 @@ class PINN(object):
 
         for epoch in range(tf_epochs):
 
-            # по эпохам будем менять вес ошибок, а то на последних он ближе к диффуру чем к г.у.
-            if epoch < 1000:
-                loss_weights = [10.0, 1.0]
-            elif epoch < 5000:
-                loss_weights = [3.0, 1.0]
+            # Определяем веса для текущей эпохи
+            current_weights = get_loss_weights_for_epoch(epoch, loss_weights_schedule)
 
-            total_loss, data_loss, pde_loss = self.train_step(X_u, u, loss_weights)
+            total_loss, data_loss, pde_loss = self.train_step(X_u, u, current_weights)
 
             current_loss = total_loss.numpy()
             if current_loss < best_loss:
                 best_loss = current_loss
 
-
-
             if epoch % self.logger.frequency == 0:
-                custom_info = f"data_loss: {data_loss:.2e}, pde_loss: {pde_loss:.2e}"
+                custom_info = f"data_loss: {data_loss:.2e}, pde_loss: {pde_loss:.2e}, weights: {current_weights}"
                 self.logger.log_train_epoch(epoch, total_loss, custom_info)
 
         return {"best_loss": best_loss}
 
-
     def predict(self, X):
         return self.u_model(X)
-
-

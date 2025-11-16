@@ -6,7 +6,8 @@ from PINN import init_model_params
 import traceback
 
 
-def train_pinn_model(num_layers, num_perceptrons, num_epoch, optimizer):
+def train_pinn_model(num_layers, num_perceptrons, num_epoch, optimizer, loss_weights_config=""):
+    print(f"Полученная конфигурация весов: '{loss_weights_config}'")
     try:
         # Инициализация загрузчика данных
         data_loader = PINNDataLoader(client)
@@ -31,9 +32,9 @@ def train_pinn_model(num_layers, num_perceptrons, num_epoch, optimizer):
         )
         logger = Logger(frequency=200)
 
-        # Создание и обучение модели
+        # Создание и обучение модели с передачей конфигурации весов
         pinn = PINN(layers, tf_optimizer, logger, X_f_train, lb, ub)
-        training_results = pinn.fit(X_u_train, u_train, tf_epochs)
+        training_results = pinn.fit(X_u_train, u_train, tf_epochs, loss_weights_config)
 
         # Получаем график и статистику обучения
         training_plot = logger.get_training_plot()
@@ -47,7 +48,8 @@ def train_pinn_model(num_layers, num_perceptrons, num_epoch, optimizer):
             "num_perceptrons": num_perceptrons,
             "optimizer": optimizer,
             "best_loss": float(training_results["best_loss"]),
-            "training_plot": training_plot
+            "training_plot": training_plot,
+            "loss_weights_used": loss_weights_config if loss_weights_config else "равные веса [1.0, 1.0]"
         }
 
         return results

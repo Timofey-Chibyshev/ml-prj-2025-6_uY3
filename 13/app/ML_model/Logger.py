@@ -1,29 +1,16 @@
 import time
 from datetime import datetime
-from Client_ClickHouse import client
-import queries
 from visualization import TrainingVisualizer
 
 
 class Logger(object):
-    def __init__(self, frequency=100, database='db', table_name="TableEpochLog", client=client):
+    def __init__(self, frequency=100, database='db', table_name="TableEpochLog"):
         self.start_time = time.time()
         self.frequency = frequency
-        self.client = client
-        self.database = database
-        self.table_name = table_name
         self.visualizer = TrainingVisualizer()
 
-        # Создаем таблицу при инициализации
-        self._create_table()
 
-    def _create_table(self):
-        try:
-            create_table_query = queries.create_table(self.database, self.table_name)
-            self.client.execute(create_table_query)
-            print(f"Table {self.database}.{self.table_name} created successfully")
-        except Exception as e:
-            print(f"Warning: Could not create table in ClickHouse: {e}")
+
 
     def __get_elapsed(self):
         return datetime.fromtimestamp(time.time() - self.start_time).strftime("%M:%S")
@@ -51,13 +38,7 @@ class Logger(object):
             # Добавляем данные в визуализатор
             self.visualizer.add_epoch_data(epoch, float(loss), data_loss, pde_loss)
 
-            # Логируем в ClickHouse
-            try:
-                insert_query = queries.insert_query(self.database, self.table_name, epoch, time.time(), self.start_time,
-                                                    loss, data_loss, pde_loss)
-                self.client.execute(insert_query)
-            except Exception as e:
-                print(f"Warning: Could not log to ClickHouse: {e}")
+
 
     def log_train_opt(self, name):
         print(f"—— Starting {name} optimization ——")
@@ -67,9 +48,7 @@ class Logger(object):
         print(f"Training finished (epoch {epoch}): duration = {self.__get_elapsed()} {custom}")
 
     def get_training_plot(self) -> str:
-        """Получение графика обучения в base64 формате"""
         return self.visualizer.create_training_plot()
 
     def get_training_stats(self) -> dict:
-        """Получение статистики обучения"""
         return self.visualizer.get_training_stats()
