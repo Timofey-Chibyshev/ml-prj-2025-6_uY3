@@ -2,7 +2,6 @@ def create_db(database):
     return f'CREATE DATABASE IF NOT EXISTS {database}'
 
 def create_table(database, table_name, type):
-
     if type == "train_points":
         return f"""
         CREATE TABLE IF NOT EXISTS {database}.{table_name}
@@ -14,7 +13,6 @@ def create_table(database, table_name, type):
         ENGINE = MergeTree()
         ORDER BY (x, t)
         """
-
     elif type == "collocate_points":
         return f"""
                 CREATE TABLE IF NOT EXISTS {database}.{table_name}
@@ -26,6 +24,11 @@ def create_table(database, table_name, type):
                 ORDER BY (x, t)
                 """
 
+def drop_table(database, table_name):
+    return f"DROP TABLE IF EXISTS {database}.{table_name}"
+
+def truncate_table(database, table_name):
+    return f"TRUNCATE TABLE IF EXISTS {database}.{table_name}"
 
 def insert_query(database, table_name, type):
     if type == "train_points":

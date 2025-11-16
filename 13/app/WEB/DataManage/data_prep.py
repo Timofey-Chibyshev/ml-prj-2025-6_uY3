@@ -8,7 +8,6 @@ class DataProcessor:
 
     @staticmethod
     def normalize_data(data, columns):
-
         normalized_data = data.copy()
         for col in columns:
             min_val = data[col].min()
@@ -26,8 +25,19 @@ class ClickHouseManager:
         self.client = client
         self.database = database
 
-    def save_to_clickhouse(self, data, table_name, data_type):
+    def clear_table(self, table_name):
+        """Очищает указанную таблицу"""
+        try:
+            truncate_query = queries.truncate_table(self.database, table_name)
+            self.client.execute(truncate_query)
+            print(f"Таблица {table_name} успешно очищена")
+            return True
+        except Exception as e:
+            print(f"Ошибка при очистке таблицы {table_name}: {e}")
+            return False
 
+    def save_to_clickhouse(self, data, table_name, data_type, clear_existing=True):
+        """Сохраняет данные в ClickHouse с опцией очистки существующих данных"""
         try:
             print("Успешное подключение к ClickHouse")
 
@@ -38,6 +48,10 @@ class ClickHouseManager:
             create_table_query = queries.create_table(self.database, table_name, data_type)
             self.client.execute(create_table_query)
             print(f"Таблица {table_name} создана или уже существует")
+
+            # Очищаем таблицу если требуется
+            if clear_existing:
+                self.clear_table(table_name)
 
             # Подготавливаем данные для вставки
             if data_type == "train_points":
@@ -93,21 +107,22 @@ class DataManager:
 
     def process_csv_data(self, filepath, num_collocation_points=300):
         try:
-
+            # Читаем и обрабатываем CSV
             df = pd.read_csv(filepath)
             df = self.processor.normalize_data(df, ["x", "t"])
 
-
-            if not self.db_manager.save_to_clickhouse(df, "TableTrainData", "train_points"):
+            # Сохраняем тренировочные данные (очищаем существующие)
+            if not self.db_manager.save_to_clickhouse(df, "TableTrainData", "train_points", clear_existing=True):
                 return False
 
-
+            # Генерируем и сохраняем точки коллокации (очищаем существующие)
             collocation_data = self.generator.generate_collocation_points(df, num_collocation_points)
             if collocation_data is not None:
                 return self.db_manager.save_to_clickhouse(
                     collocation_data,
                     "CollocatePointsTable",
-                    "collocate_points"
+                    "collocate_points",
+                    clear_existing=True
                 )
 
             return False
@@ -116,4 +131,25 @@ class DataManager:
             print(f"Ошибка при обработке CSV файла: {e}")
             return False
 
+    def update_collocation_points(self, filepath, num_collocation_points=300):
+        """Обновляет только точки коллокации без изменения тренировочных данных"""
+        try:
+            # Читаем существующие данные для получения границ
+            df = pd.read_csv(filepath)
+            df = self.processor.normalize_data(df, ["x", "t"])
 
+            # Генерируем новые точки коллокации
+            collocation_data = self.generator.generate_collocation_points(df, num_collocation_points)
+            if collocation_data is not None:
+                return self.db_manager.save_to_clickhouse(
+                    collocation_data,
+                    "CollocatePointsTable",
+                    "collocate_points",
+                    clear_existing=True
+                )
+
+            return False
+
+        except Exception as e:
+            print(f"Ошибка при обновлении точек коллокации: {e}")
+            return False
