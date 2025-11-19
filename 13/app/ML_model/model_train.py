@@ -3,6 +3,7 @@ from DataLoadFromDB import PINNDataLoader
 from Client_ClickHouse import client
 from PINN import PINN
 from PINN import init_model_params
+from PINN import save_model
 import traceback
 
 
@@ -35,7 +36,7 @@ def train_pinn_model(num_layers, num_perceptrons, num_epoch, optimizer, loss_wei
         # Создание и обучение модели с передачей конфигурации весов
         pinn = PINN(layers, tf_optimizer, logger, X_f_train, lb, ub)
         training_results = pinn.fit(X_u_train, u_train, tf_epochs, loss_weights_config)
-
+        save_model(pinn)
         # Получаем график и статистику обучения
         training_plot = logger.get_training_plot()
 
