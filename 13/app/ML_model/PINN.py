@@ -29,11 +29,7 @@ def init_model_params(num_layers, num_perceptrons, num_epoch, optimizer):
 
 
 def parse_loss_weights_config(config_str):
-    """
-    Парсит конфигурацию весов ошибок из строки
-    Формат: "эпоха:вес_данных,вес_уравнения; эпоха:вес_данных,вес_уравнения; ..."
-    Пример: "0:10.0,1.0; 1000:3.0,1.0; 5000:1.0,1.0"
-    """
+
     if not config_str:
         return None
 
@@ -59,10 +55,13 @@ def parse_loss_weights_config(config_str):
         return None
 
 
+
+
+
+
+
 def get_loss_weights_for_epoch(epoch, loss_weights_schedule):
-    """
-    Возвращает веса ошибок для заданной эпохи на основе расписания
-    """
+
     if not loss_weights_schedule:
         # Значения по умолчанию
         return [1.0, 1.0]
@@ -78,6 +77,11 @@ def get_loss_weights_for_epoch(epoch, loss_weights_schedule):
     return current_weights
 
 
+
+
+
+
+
 class PINN(object):
     def __init__(self, layers, optimizer, logger, X_f, lb, ub):
         self.layers = layers
@@ -86,8 +90,12 @@ class PINN(object):
         self.best_loss = math.inf
 
         # нормируем входной слой
-        self.u_model.add(tf.keras.layers.Lambda(
-            lambda X: 2.0 * (X - lb) / (ub - lb) - 1.0))
+        #self.u_model.add(tf.keras.layers.Lambda(
+        #    lambda X: 2.0 * (X - lb) / (ub - lb) - 1.0))
+
+        #self.u_model.add(NormalizationLayer(lb, ub))
+
+        self.u_model.add(tf.keras.layers.Rescaling(scale=2.0, offset=-1.0))
 
         # инициализируем слои НН
         for width in layers[1:-1]:
@@ -218,3 +226,8 @@ class PINN(object):
 
     def predict(self, X):
         return self.u_model(X)
+
+def save_model(model, save_dir="pinn_model_without_norm1111.keras"):
+
+    model.u_model.save(save_dir)
+    print(f"Модель сохранена в {save_dir}")
