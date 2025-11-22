@@ -20,6 +20,9 @@
             display: block;
             margin: 0 auto;
         }
+        .results-section {
+            margin-bottom: 30px;
+        }
         /* Убедимся, что base64 изображения отображаются */
         img[src^="data:image"] {
             max-width: 100%;
@@ -160,11 +163,11 @@
             </div>
         </div>
 
-        <!-- Результаты ML модели -->
+        <!-- Результаты ML модели - всегда показываем если есть -->
         {% if ml_results %}
-        <div class="card mt-4">
+        <div class="card mt-4 results-section">
             <div class="card-header {% if ml_results.status == 'success' %}bg-success{% else %}bg-danger{% endif %} text-white">
-                <h5>Результаты ML модели</h5>
+                <h5>Результаты обучения ML модели</h5>
             </div>
             <div class="card-body">
                 {% if ml_results.status == "success" %}
@@ -182,7 +185,7 @@
 
                     <!-- Основные результаты -->
                     <div class="mb-4">
-                        <h6>Основные результаты</h6>
+                        <h6>Основные результаты обучения</h6>
                         <div class="table-responsive">
                             <table class="table table-bordered">
                                 <tbody>
@@ -237,7 +240,7 @@
         </div>
         {% endif %}
 
-        <!-- Форма для предсказания -->
+        <!-- Форма для предсказания - показываем если ML модель успешно обучена -->
         {% if ml_results and ml_results.status == "success" %}
         <div class="card mt-4">
             <div class="card-header bg-info text-white">
@@ -248,12 +251,16 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="num_x_points" class="form-label">Количество точек по X:</label>
-                            <input type="number" class="form-control" id="num_x_points" name="num_x_points" value="100" min="10" max="1000" required>
+                            <input type="number" class="form-control" id="num_x_points" name="num_x_points"
+                                   value="{% if prediction_results %}{{ prediction_results.num_x_points }}{% else %}100{% endif %}"
+                                   min="10" max="1000" required>
                             <div class="form-text">10-1000 точек</div>
                         </div>
                         <div class="col-md-4">
                             <label for="prediction_time" class="form-label">Время для предсказания (t):</label>
-                            <input type="number" class="form-control" id="prediction_time" name="prediction_time" value="0.5" step="0.1" min="0" max="1" required>
+                            <input type="number" class="form-control" id="prediction_time" name="prediction_time"
+                                   value="{% if prediction_results %}{{ prediction_results.prediction_time }}{% else %}0.5{% endif %}"
+                                   step="0.1" min="0" max="1" required>
                             <div class="form-text">Нормализованное время (0-1)</div>
                         </div>
                         <div class="col-md-4">
@@ -274,7 +281,7 @@
         </div>
         {% endif %}
 
-        <!-- РЕЗУЛЬТАТЫ ПРЕДСКАЗАНИЯ - ВЫНЕСЕНЫ ОТДЕЛЬНО -->
+        <!-- Результаты предсказания - показываем отдельно если есть -->
         {% if prediction_results %}
         <div class="card mt-4">
             <div class="card-header {% if prediction_results.status == 'success' %}bg-success{% else %}bg-danger{% endif %} text-white">
@@ -286,9 +293,7 @@
 
                     {% if prediction_results.prediction_plot %}
                     <div class="plot-container">
-                        <img src="{{ prediction_results.prediction_plot }}" class="plot-image" alt="Prediction Plot"
-                             onerror="console.error('Ошибка загрузки изображения предсказания')"
-                             onload="console.log('Изображение предсказания загружено успешно')">
+                        <img src="{{ prediction_results.prediction_plot }}" class="plot-image" alt="Prediction Plot">
                     </div>
                     {% else %}
                     <div class="alert alert-warning">
@@ -300,20 +305,6 @@
                         <strong>Ошибка при выполнении предсказания:</strong><br>
                         {{ prediction_results.message }}
                     </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Временный отладочный блок - можно удалить после проверки -->
-        <div class="card mt-2 bg-light">
-            <div class="card-body">
-                <h6>Отладочная информация (предсказание):</h6>
-                <p>Статус: <strong>{{ prediction_results.status }}</strong></p>
-                <p>Есть график: <strong>{% if prediction_results.prediction_plot %}ДА (длина: {{ prediction_results.prediction_plot|length }}){% else %}НЕТ{% endif %}</strong></p>
-                <p>Время: <strong>{{ prediction_results.prediction_time }}</strong></p>
-                <p>Точек: <strong>{{ prediction_results.num_x_points }}</strong></p>
-                {% if prediction_results.prediction_plot %}
-                <p>Начинается с: <code>{{ prediction_results.prediction_plot[:50] }}...</code></p>
                 {% endif %}
             </div>
         </div>
