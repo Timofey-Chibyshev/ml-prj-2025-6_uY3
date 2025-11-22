@@ -42,6 +42,8 @@ templates = Jinja2Templates(directory=templates_dir)
 data_loaded = False
 last_uploaded_file_path = None
 last_model_id = None  # Будет хранить ID последней обученной модели
+ml_results = None  # Сохраняем результаты ML модели
+prediction_results = None  # Сохраняем результаты предсказания
 
 #app.mount("/static", StaticFiles(directory="./static"), name="static")
 
@@ -72,6 +74,8 @@ async def upload_form(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request,
         "data_loaded": data_loaded,
+        "ml_results": ml_results,
+        "prediction_results": prediction_results,
         "last_model_id": last_model_id
     })
 
@@ -82,7 +86,7 @@ async def upload_csv(
         file: UploadFile = File(...),
         num_points: int = Form(300)
 ):
-    global data_loaded, last_uploaded_file_path
+    global data_loaded, last_uploaded_file_path, ml_results, prediction_results
 
     try:
         # Читаем содержимое файла
@@ -98,6 +102,8 @@ async def upload_csv(
 
         if success:
             data_loaded = True
+            ml_results = None  # Сбрасываем результаты ML при загрузке новых данных
+            prediction_results = None  # Сбрасываем результаты предсказания
             message = f"Файл успешно обработан и данные загружены в ClickHouse! Загружено {num_points} точек коллокации. Теперь можно запустить ML модель."
             message_type = "success"
         else:
@@ -115,6 +121,8 @@ async def upload_csv(
         "message": message,
         "message_type": message_type,
         "data_loaded": data_loaded,
+        "ml_results": ml_results,
+        "prediction_results": prediction_results,
         "last_model_id": last_model_id
     })
 
@@ -124,7 +132,7 @@ async def update_collocation_points(
         request: Request,
         num_points: int = Form(300)
 ):
-    global data_loaded, last_uploaded_file_path
+    global data_loaded, last_uploaded_file_path, ml_results, prediction_results
 
     if not data_loaded:
         return templates.TemplateResponse("index.html", {
@@ -132,6 +140,8 @@ async def update_collocation_points(
             "message": "Сначала загрузите данные!",
             "message_type": "warning",
             "data_loaded": False,
+            "ml_results": ml_results,
+            "prediction_results": prediction_results,
             "last_model_id": last_model_id
         })
 
@@ -141,6 +151,8 @@ async def update_collocation_points(
             "message": "Файл данных не найден. Пожалуйста, загрузите файл снова.",
             "message_type": "warning",
             "data_loaded": data_loaded,
+            "ml_results": ml_results,
+            "prediction_results": prediction_results,
             "last_model_id": last_model_id
         })
 
@@ -149,6 +161,8 @@ async def update_collocation_points(
         success = data_main(last_uploaded_file_path, num_collocation_points=num_points)
 
         if success:
+            ml_results = None  # Сбрасываем результаты ML при обновлении точек
+            prediction_results = None  # Сбрасываем результаты предсказания
             message = f"Точки коллокации успешно обновлены! Новое количество: {num_points}"
             message_type = "success"
         else:
@@ -164,6 +178,8 @@ async def update_collocation_points(
         "message": message,
         "message_type": message_type,
         "data_loaded": data_loaded,
+        "ml_results": ml_results,
+        "prediction_results": prediction_results,
         "last_model_id": last_model_id
     })
 
@@ -177,7 +193,7 @@ async def run_ml_model(
         optimizer: str = Form("Adam"),
         loss_weights_config: str = Form("")
 ):
-    global data_loaded, last_model_id
+    global data_loaded, last_model_id, ml_results, prediction_results
 
     if not data_loaded:
         return templates.TemplateResponse("index.html", {
@@ -185,10 +201,10 @@ async def run_ml_model(
             "message": "Сначала загрузите данные!",
             "message_type": "warning",
             "data_loaded": False,
+            "ml_results": ml_results,
+            "prediction_results": prediction_results,
             "last_model_id": last_model_id
         })
-
-    ml_results = None
 
     try:
         # Подготавливаем данные для ML сервиса
@@ -212,9 +228,10 @@ async def run_ml_model(
             )
 
         if response.status_code == 200:
-            ml_results = response.json()
+            ml_results = response.json()  # Сохраняем результаты ML
             # Сохраняем ID модели для скачивания
             last_model_id = ml_results.get("model_id")
+            prediction_results = None  # Сбрасываем предыдущие результаты предсказания
 
             message = f"ML модель успешно обучена! Параметры: {num_layers} слоев, {num_perceptrons} нейронов, {num_epoch} эпох, оптимизатор: {optimizer}"
             message_type = "success"
@@ -238,6 +255,7 @@ async def run_ml_model(
         "message_type": message_type,
         "data_loaded": data_loaded,
         "ml_results": ml_results,
+        "prediction_results": prediction_results,
         "last_model_id": last_model_id
     })
 
@@ -248,19 +266,18 @@ async def make_prediction(
         num_x_points: int = Form(100),
         prediction_time: float = Form(0.5)
 ):
-    global data_loaded
+    global data_loaded, ml_results, prediction_results
 
-    if not data_loaded:
+    if not data_loaded or not ml_results or ml_results.get("status") != "success":
         return templates.TemplateResponse("index.html", {
             "request": request,
             "message": "Сначала загрузите данные и обучите ML модель!",
             "message_type": "warning",
-            "data_loaded": False,
+            "data_loaded": data_loaded,
+            "ml_results": ml_results,
+            "prediction_results": prediction_results,
             "last_model_id": last_model_id
         })
-
-    prediction_results = None
-    ml_results = None
 
     try:
         # Подготавливаем данные для ML сервиса
@@ -278,16 +295,13 @@ async def make_prediction(
             )
 
         if response.status_code == 200:
-
-            prediction_results = response.json()
+            prediction_results = response.json()  # Сохраняем результаты предсказания
 
             print(f"Получены результаты предсказания: статус {prediction_results.get('status')}")
             print(f"Есть ли график: {'prediction_plot' in prediction_results}")
 
             if 'prediction_plot' in prediction_results and prediction_results['prediction_plot']:
                 print(f"Длина данных графика: {len(prediction_results['prediction_plot'])}")
-
-            #message = f"Предсказание успешно построено! {num_x_points} точек при t={prediction_time}"
 
             message = f"Предсказание успешно построено! {num_x_points} точек при t={prediction_time}"
             message_type = "success"
@@ -307,8 +321,8 @@ async def make_prediction(
         "message": message,
         "message_type": message_type,
         "data_loaded": data_loaded,
-        "ml_results": ml_results,
-        "prediction_results": prediction_results,
+        "ml_results": ml_results,  # Сохраняем результаты ML
+        "prediction_results": prediction_results,  # Добавляем результаты предсказания
         "last_model_id": last_model_id
     })
 
