@@ -14,7 +14,7 @@ ml_status = {
     "error": None
 }
 
-# Добавьте эту переменную для хранения ID последней модели
+
 last_model_id = None
 
 class MLParams(BaseModel):
@@ -22,12 +22,16 @@ class MLParams(BaseModel):
     num_perceptrons: int = 50
     num_epoch: int = 10000
     optimizer: str = "Adam"
-    loss_weights_config: str = ""  # Добавлен параметр конфигурации весов ошибок
+    loss_weights_config: str = ""
+
+
 
 class PredictionParams(BaseModel):
     num_x_points: int = 100
     prediction_time: float = 0.5
 
+
+# Запуск модели
 @app.post("/run_ml_model")
 async def run_ml_model(params: MLParams):
     global ml_status, last_model_id
@@ -42,7 +46,7 @@ async def run_ml_model(params: MLParams):
         print(f"Запуск ML модели с параметрами: {params.num_layers} слоев, {params.num_perceptrons} нейронов, {params.num_epoch} эпох, оптимизатор: {params.optimizer}")
         print(f"Конфигурация весов ошибок: {params.loss_weights_config}")
 
-        # Запускаем обучение модели с переданными параметрами
+
         results = train_pinn_model(
             num_layers=params.num_layers,
             num_perceptrons=params.num_perceptrons,
@@ -61,27 +65,38 @@ async def run_ml_model(params: MLParams):
             last_model_id = results.get("model_id")  # Сохраняем ID модели
             return results
 
+
+
     except Exception as e:
         error_msg = f"Неожиданная ошибка: {str(e)}"
         ml_status["error"] = error_msg
         ml_status["is_running"] = False
         raise HTTPException(status_code=500, detail=error_msg)
 
+
+
+
+
+# Скачинвание модели
 @app.get("/download_model")
 async def download_model():
+
     try:
         model_path = "pinn_model.keras"
+
         if os.path.exists(model_path):
             return FileResponse(
                 model_path,
                 media_type='application/octet-stream',
                 filename="pinn_model.keras"
             )
+
         else:
             raise HTTPException(status_code=404, detail="Модель не найдена. Сначала обучите модель.")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при скачивании модели: {str(e)}")
+
 
 
 @app.get("/ml_status")
@@ -98,6 +113,7 @@ async def health_check():
     }
 
 
+
 @app.post("/predict")
 async def make_prediction(params: PredictionParams):
     try:
@@ -112,32 +128,38 @@ async def make_prediction(params: PredictionParams):
             print(f"ERROR: {error_msg}")
             return {"status": "error", "message": error_msg}
 
-        # Используем класс PredictionManager
+
         prediction_manager = PredictionManager(model_id=last_model_id)
 
         # Пытаемся загрузить модель
         model_loaded = prediction_manager.load_model()
         if not model_loaded:
+
             error_msg = "Не удалось загрузить модель из MinIO"
             print(f"ERROR: {error_msg}")
             return {"status": "error", "message": error_msg}
 
         print("DEBUG: Модель успешно загружена, выполняем предсказание...")
 
+
         results = prediction_manager.make_prediction(
             num_x_points=params.num_x_points,
             prediction_time=params.prediction_time
         )
 
+
         print(f"DEBUG: Результаты предсказания: статус = {results.get('status')}")
+
         if results.get('status') == 'success':
             print(f"DEBUG: График создан успешно")
+
         else:
             print(f"DEBUG: Ошибка предсказания: {results.get('message')}")
 
         return results
 
     except Exception as e:
+
         error_msg = f"Неожиданная ошибка при предсказании: {str(e)}"
         print(f"ERROR: {error_msg}")
         import traceback

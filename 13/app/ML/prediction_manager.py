@@ -5,25 +5,25 @@ from DataLoadFromDB import PINNDataLoader
 from Client_ClickHouse import client
 from visualization import PredictionVisualizer
 import tempfile
-from minio import Minio
+from Minio_Client import minio_client
 
-def get_minio_client():
-    return Minio(
-        os.getenv("MINIO_ENDPOINT", "minio-service:9000"),
-        access_key=os.getenv("MINIO_ACCESS_KEY", "admin"),
-        secret_key=os.getenv("MINIO_SECRET_KEY", "admin123"),
-        secure=False
-    )
+#def get_minio_client():
+#    return Minio(
+#        os.getenv("MINIO_ENDPOINT", "minio-service:9000"),
+#        access_key=os.getenv("MINIO_ACCESS_KEY", "admin"),
+#        secret_key=os.getenv("MINIO_SECRET_KEY", "admin123"),
+#        secure=False
+#    )
 
 class PredictionManager:
-    def __init__(self, model_id=None):
+    def __init__(self, model_id=None, minion_client=minio_client):
         self.model = None
         self.data_loader = PINNDataLoader(client)
         self.visualizer = PredictionVisualizer()
         self.model_id = model_id
+        self.minion_client = minion_client
 
     def load_model(self, model_id=None):
-        """Загрузка обученной модели из MinIO"""
         if model_id:
             self.model_id = model_id
 
@@ -31,7 +31,7 @@ class PredictionManager:
             raise ValueError("Model ID not specified")
 
         try:
-            minio_client = get_minio_client()
+            #minio_client = get_minio_client()
 
             # Получаем модель из MinIO
             response = minio_client.get_object("models", f"{self.model_id}.keras")
@@ -67,7 +67,7 @@ class PredictionManager:
             return False
 
     def get_domain_bounds(self, original_data):
-        """Получение границ области данных"""
+
         x_min = float(original_data['x'].min())
         x_max = float(original_data['x'].max())
         t_min = float(original_data['t'].min())
@@ -77,11 +77,7 @@ class PredictionManager:
         return x_min, x_max, t_min, t_max
 
     def get_boundary_points(self, original_data, target_time, t_min):
-        """
-        Получаем граничные точки:
-        - Для t=0: все начальные точки
-        - Для t>0: только две точки - минимальный и максимальный x
-        """
+
         if original_data.empty:
             return original_data
 
@@ -128,7 +124,7 @@ class PredictionManager:
         return boundary_points
 
     def prepare_prediction_data(self, x_min, x_max, t_min, t_max, num_x_points, prediction_time):
-        """Подготовка данных для предсказания"""
+
         # Создаем сетку для предсказания в оригинальных координатах
         x_points = np.linspace(x_min, x_max, num_x_points).reshape(-1, 1)
 
@@ -142,7 +138,7 @@ class PredictionManager:
         return x_points, X_pred
 
     def predict_boundary_points(self, boundary_points, x_min, x_max, t_min, t_max, prediction_time):
-        """Предсказание для граничных точек"""
+
         if boundary_points.empty:
             return None
 
@@ -177,10 +173,13 @@ class PredictionManager:
             t_original = float(prediction_time * (t_max - t_min) + t_min)
             print(f"Запрошенное время: нормализованное={prediction_time}, оригинальное={t_original}")
 
+
             # Подготавливаем данные для основного предсказания
             x_points, X_pred = self.prepare_prediction_data(
                 x_min, x_max, t_min, t_max, num_x_points, prediction_time
             )
+
+
 
             # Выполняем основное предсказание
             predictions = self.model.predict(X_pred, verbose=0)
@@ -189,12 +188,16 @@ class PredictionManager:
             boundary_points = self.get_boundary_points(original_data, t_original, t_min)
             print(f"Найдено {len(boundary_points)} граничных точек")
 
+
+
             # Вычисляем предсказания для граничных точек
             boundary_predictions = None
             if not boundary_points.empty:
                 boundary_predictions = self.predict_boundary_points(
                     boundary_points, x_min, x_max, t_min, t_max, prediction_time
                 )
+
+
 
             # Создаем график с помощью визуализатора - передаем prediction_time и num_x_points
             plot_data = self.visualizer.create_prediction_plot(
@@ -206,6 +209,7 @@ class PredictionManager:
                 boundary_true=boundary_points['value'].values if not boundary_points.empty else None,
                 boundary_pred=boundary_predictions.flatten() if boundary_predictions is not None else None
             )
+
 
             if plot_data is None:
                 return {"status": "error", "message": "Ошибка при создании графика"}
@@ -219,6 +223,8 @@ class PredictionManager:
             }
 
             return results
+
+
 
         except Exception as e:
             error_msg = f"Ошибка при выполнении предсказания: {str(e)}"
