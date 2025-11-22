@@ -72,11 +72,12 @@ class TrainingVisualizer:
 class PredictionVisualizer:
     """Класс для визуализации предсказаний модели"""
 
-    #@staticmethod
     def create_prediction_plot(
             self,
             x_points: np.ndarray,
             predictions: np.ndarray,
+            prediction_time: float,
+            num_x_points: int,
             boundary_x: Optional[np.ndarray] = None,
             boundary_true: Optional[np.ndarray] = None,
             boundary_pred: Optional[np.ndarray] = None,
@@ -88,6 +89,8 @@ class PredictionVisualizer:
         Args:
             x_points: Массив x координат
             predictions: Массив предсказанных значений
+            prediction_time: Время предсказания
+            num_x_points: Количество точек по X
             boundary_x: x координаты граничных точек (опционально)
             boundary_true: Истинные значения граничных точек (опционально)
             boundary_pred: Предсказанные значения граничных точек (опционально)
@@ -158,8 +161,11 @@ class PredictionVisualizer:
                         label='Ошибка' if i == 0 else ""
                     )
 
+            # Устанавливаем заголовок и подписи осей
+            plt.title(f'Предсказание модели в момент времени t = {prediction_time} ({num_x_points} точек)',
+                     fontsize=14, fontweight='bold')
             plt.xlabel('x', fontsize=12)
-            plt.ylabel('u(x, t)', fontsize=12)
+            plt.ylabel(f'S(x, t={prediction_time})', fontsize=12)
             plt.grid(True, alpha=0.3)
             plt.legend(fontsize=10)
 
@@ -167,23 +173,24 @@ class PredictionVisualizer:
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
             buf.seek(0)
-            plot_data = base64.b64encode(buf.getvalue()).decode()
+            plot_data = base64.b64encode(buf.getvalue()).decode('utf-8')
             plt.close()
-
-            print(f"DEBUG: График успешно создан, длина base64: {len(plot_data)}")
 
             return f"data:image/png;base64,{plot_data}"
 
         except Exception as e:
             print(f"Ошибка при создании графика предсказания: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
-    #@staticmethod
     def create_comparison_plot(
             self,
             x_points: np.ndarray,
             predictions: np.ndarray,
             true_values: np.ndarray,
+            prediction_time: float,
+            num_x_points: int,
             figsize: tuple = (12, 8)
     ) -> str:
         """
@@ -193,6 +200,8 @@ class PredictionVisualizer:
             x_points: Массив x координат
             predictions: Массив предсказанных значений
             true_values: Массив истинных значений
+            prediction_time: Время предсказания
+            num_x_points: Количество точек по X
             figsize: Размер графика
 
         Returns:
@@ -230,8 +239,8 @@ class PredictionVisualizer:
             )
 
             plt.xlabel('x', fontsize=12)
-            plt.ylabel('u(x, t)', fontsize=12)
-            plt.title('Сравнение предсказаний с истинными значениями')
+            plt.ylabel(f'S(x, t={prediction_time})', fontsize=12)
+            plt.title(f'Сравнение предсказаний с истинными значениями (t={prediction_time}, {num_x_points} точек)')
             plt.grid(True, alpha=0.3)
             plt.legend(fontsize=10)
 
@@ -239,10 +248,8 @@ class PredictionVisualizer:
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
             buf.seek(0)
-            plot_data = base64.b64encode(buf.getvalue()).decode()
+            plot_data = base64.b64encode(buf.getvalue()).decode('utf-8')
             plt.close()
-
-            print(f"DEBUG: График успешно создан, длина base64: {len(plot_data)}")
 
             return f"data:image/png;base64,{plot_data}"
 

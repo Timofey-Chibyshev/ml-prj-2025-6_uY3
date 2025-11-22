@@ -17,7 +17,6 @@ def get_minio_client():
 
 class PredictionManager:
     def __init__(self, model_id=None):
-        #self.model_path = model_path
         self.model = None
         self.data_loader = PINNDataLoader(client)
         self.visualizer = PredictionVisualizer()
@@ -66,8 +65,6 @@ class PredictionManager:
             except:
                 pass
             return False
-
-
 
     def get_domain_bounds(self, original_data):
         """Получение границ области данных"""
@@ -199,10 +196,12 @@ class PredictionManager:
                     boundary_points, x_min, x_max, t_min, t_max, prediction_time
                 )
 
-            # Создаем график с помощью визуализатора
+            # Создаем график с помощью визуализатора - передаем prediction_time и num_x_points
             plot_data = self.visualizer.create_prediction_plot(
-                x_points,
-                predictions,
+                x_points=x_points,
+                predictions=predictions,
+                prediction_time=prediction_time,
+                num_x_points=num_x_points,
                 boundary_x=boundary_points['x'].values if not boundary_points.empty else None,
                 boundary_true=boundary_points['value'].values if not boundary_points.empty else None,
                 boundary_pred=boundary_predictions.flatten() if boundary_predictions is not None else None
