@@ -72,8 +72,9 @@ class TrainingVisualizer:
 class PredictionVisualizer:
     """Класс для визуализации предсказаний модели"""
 
-    @staticmethod
+    #@staticmethod
     def create_prediction_plot(
+            self,
             x_points: np.ndarray,
             predictions: np.ndarray,
             boundary_x: Optional[np.ndarray] = None,
@@ -166,8 +167,10 @@ class PredictionVisualizer:
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
             buf.seek(0)
-            plot_data = base64.b64encode(buf.getvalue()).decode('utf-8')
+            plot_data = base64.b64encode(buf.getvalue()).decode()
             plt.close()
+
+            print(f"DEBUG: График успешно создан, длина base64: {len(plot_data)}")
 
             return f"data:image/png;base64,{plot_data}"
 
@@ -175,8 +178,9 @@ class PredictionVisualizer:
             print(f"Ошибка при создании графика предсказания: {e}")
             return None
 
-    @staticmethod
+    #@staticmethod
     def create_comparison_plot(
+            self,
             x_points: np.ndarray,
             predictions: np.ndarray,
             true_values: np.ndarray,
@@ -235,8 +239,10 @@ class PredictionVisualizer:
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
             buf.seek(0)
-            plot_data = base64.b64encode(buf.getvalue()).decode('utf-8')
+            plot_data = base64.b64encode(buf.getvalue()).decode()
             plt.close()
+
+            print(f"DEBUG: График успешно создан, длина base64: {len(plot_data)}")
 
             return f"data:image/png;base64,{plot_data}"
 

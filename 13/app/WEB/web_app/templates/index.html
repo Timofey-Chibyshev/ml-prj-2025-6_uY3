@@ -5,6 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSV Uploader and ML Runner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .plot-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .plot-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        /* Убедимся, что base64 изображения отображаются */
+        img[src^="data:image"] {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
@@ -142,68 +163,75 @@
         <!-- Результаты ML модели -->
         {% if ml_results %}
         <div class="card mt-4">
-            <div class="card-header bg-success text-white">
+            <div class="card-header {% if ml_results.status == 'success' %}bg-success{% else %}bg-danger{% endif %} text-white">
                 <h5>Результаты ML модели</h5>
             </div>
             <div class="card-body">
-                <!-- График обучения -->
-                {% if ml_results.training_plot %}
-                <div class="mb-4">
-                    <h6>График обучения</h6>
-                    <img src="{{ ml_results.training_plot }}" class="img-fluid" alt="Training Plot" style="max-height: 500px;">
-                </div>
-                {% endif %}
-
-                <!-- Основные результаты -->
-                <div class="mb-4">
-                    <h6>Основные результаты</h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <tbody>
-                                <tr>
-                                    <th>Количество эпох:</th>
-                                    <td>{{ ml_results.training_epochs }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Количество слоев:</th>
-                                    <td>{{ ml_results.model_layers }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Количество перцептронов в слое:</th>
-                                    <td>{{ ml_results.num_perceptrons }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Оптимизатор:</th>
-                                    <td>{{ ml_results.optimizer }}</td>
-                                </tr>
-
-                                <tr>
-                                    <th>Время обучения:</th>
-                                    <td>{{ ml_results.training_model_time|round(2) }} с</td>
-                                </tr>
-                                <tr>
-                                    <th>Лучшая ошибка:</th>
-                                    <td>{{ "%.2e"|format(ml_results.best_loss) }}</td>
-                                </tr>
-                                {% if ml_results.loss_weights_used %}
-                                <tr>
-                                    <th>Использованные веса ошибок:</th>
-                                    <td>{{ ml_results.loss_weights_used }}</td>
-                                </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Кнопка скачивания модели -->
                 {% if ml_results.status == "success" %}
-                <div class="mt-3">
-                    <a href="/download_model" class="btn btn-outline-primary">
-                        Скачать модель (Keras)
-                    </a>
-                    <small class="form-text text-muted">Скачайте обученную модель в формате Keras для дальнейшего использования.</small>
-                </div>
+                    <!-- График обучения -->
+                    {% if ml_results.training_plot %}
+                    <div class="plot-container">
+                        <h6>График обучения</h6>
+                        <img src="{{ ml_results.training_plot }}" class="plot-image" alt="Training Plot">
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        График обучения недоступен
+                    </div>
+                    {% endif %}
+
+                    <!-- Основные результаты -->
+                    <div class="mb-4">
+                        <h6>Основные результаты</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Количество эпох:</th>
+                                        <td>{{ ml_results.training_epochs }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Количество слоев:</th>
+                                        <td>{{ ml_results.model_layers }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Количество перцептронов в слое:</th>
+                                        <td>{{ ml_results.num_perceptrons }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Оптимизатор:</th>
+                                        <td>{{ ml_results.optimizer }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Время обучения:</th>
+                                        <td>{{ "%.2f"|format(ml_results.training_model_time) }} с</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Лучшая ошибка:</th>
+                                        <td>{{ "%.2e"|format(ml_results.best_loss) }}</td>
+                                    </tr>
+                                    {% if ml_results.loss_weights_used %}
+                                    <tr>
+                                        <th>Использованные веса ошибок:</th>
+                                        <td>{{ ml_results.loss_weights_used }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка скачивания модели -->
+                    <div class="mt-3">
+                        <a href="/download_model" class="btn btn-outline-primary">
+                            Скачать модель (Keras)
+                        </a>
+                        <small class="form-text text-muted">Скачайте обученную модель в формате Keras для дальнейшего использования.</small>
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <strong>Ошибка при обучении модели:</strong> {{ ml_results.message }}
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -225,8 +253,8 @@
                         </div>
                         <div class="col-md-4">
                             <label for="prediction_time" class="form-label">Время для предсказания (t):</label>
-                            <input type="number" class="form-control" id="prediction_time" name="prediction_time" value="0.5" step="0.1" min="0" required>
-                            <div class="form-text">Момент времени</div>
+                            <input type="number" class="form-control" id="prediction_time" name="prediction_time" value="0.5" step="0.1" min="0" max="1" required>
+                            <div class="form-text">Нормализованное время (0-1)</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">&nbsp;</label>
@@ -242,18 +270,50 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+        {% endif %}
 
-                <!-- Результаты предсказания -->
-                {% if prediction_results %}
-                <div class="mt-4">
+        <!-- РЕЗУЛЬТАТЫ ПРЕДСКАЗАНИЯ - ВЫНЕСЕНЫ ОТДЕЛЬНО -->
+        {% if prediction_results %}
+        <div class="card mt-4">
+            <div class="card-header {% if prediction_results.status == 'success' %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <h5>Результаты предсказания</h5>
+            </div>
+            <div class="card-body">
+                {% if prediction_results.status == "success" %}
                     <h6>Предсказание модели в момент времени t = {{ prediction_results.prediction_time }} ({{ prediction_results.num_x_points }} точек)</h6>
 
                     {% if prediction_results.prediction_plot %}
-                    <div class="mb-4">
-                        <img src="{{ prediction_results.prediction_plot }}" class="img-fluid" alt="Prediction Plot" style="max-height: 500px;">
+                    <div class="plot-container">
+                        <img src="{{ prediction_results.prediction_plot }}" class="plot-image" alt="Prediction Plot"
+                             onerror="console.error('Ошибка загрузки изображения предсказания')"
+                             onload="console.log('Изображение предсказания загружено успешно')">
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        График предсказания недоступен
                     </div>
                     {% endif %}
-                </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <strong>Ошибка при выполнении предсказания:</strong><br>
+                        {{ prediction_results.message }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Временный отладочный блок - можно удалить после проверки -->
+        <div class="card mt-2 bg-light">
+            <div class="card-body">
+                <h6>Отладочная информация (предсказание):</h6>
+                <p>Статус: <strong>{{ prediction_results.status }}</strong></p>
+                <p>Есть график: <strong>{% if prediction_results.prediction_plot %}ДА (длина: {{ prediction_results.prediction_plot|length }}){% else %}НЕТ{% endif %}</strong></p>
+                <p>Время: <strong>{{ prediction_results.prediction_time }}</strong></p>
+                <p>Точек: <strong>{{ prediction_results.num_x_points }}</strong></p>
+                {% if prediction_results.prediction_plot %}
+                <p>Начинается с: <code>{{ prediction_results.prediction_plot[:50] }}...</code></p>
                 {% endif %}
             </div>
         </div>
@@ -311,7 +371,7 @@
 
         document.getElementById('num_perceptrons')?.addEventListener('change', function() {
             const value = parseInt(this.value);
-            if (value < 10) this.value = 10;
+            if (value < 1) this.value = 1;
             if (value > 200) this.value = 200;
         });
 
@@ -319,8 +379,6 @@
             const value = parseInt(this.value);
             if (value < 100) this.value = 100;
             if (value > 100000) this.value = 100000;
-            // Округление до ближайшей 1000
-            this.value = Math.round(value / 1000) * 1000;
         });
 
         // Валидация параметров предсказания
@@ -333,6 +391,7 @@
         document.getElementById('prediction_time')?.addEventListener('change', function() {
             const value = parseFloat(this.value);
             if (value < 0) this.value = 0;
+            if (value > 1) this.value = 1;
         });
 
         // Пример конфигурации весов ошибок
@@ -340,6 +399,18 @@
             if (!this.value) {
                 this.value = '0:10.0,1.0; 1000:3.0,1.0; 5000:1.0,1.0';
             }
+        });
+
+        // Автоматическая прокрутка к результатам после загрузки
+        window.addEventListener('load', function() {
+            {% if prediction_results %}
+            setTimeout(() => {
+                const predictionCard = document.querySelector('.card.bg-light');
+                if (predictionCard) {
+                    predictionCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+            {% endif %}
         });
     </script>
 </body>

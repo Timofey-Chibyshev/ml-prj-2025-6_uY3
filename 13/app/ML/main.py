@@ -101,28 +101,45 @@ async def health_check():
 @app.post("/predict")
 async def make_prediction(params: PredictionParams):
     try:
-        # Получаем ID последней обученной модели из глобальной переменной
-        # (нужно добавить эту переменную в main.py ML сервиса)
         global last_model_id
 
-        if not last_model_id:
-            return {"status": "error", "message": "Модель еще не обучена"}
+        print(f"DEBUG: Получен запрос на предсказание")
+        print(f"DEBUG: last_model_id = {last_model_id}")
+        print(f"DEBUG: Параметры: {params}")
 
-        # Используем класс PredictionManager с указанием model_id
+        if not last_model_id:
+            error_msg = "Модель еще не обучена. Сначала обучите модель."
+            print(f"ERROR: {error_msg}")
+            return {"status": "error", "message": error_msg}
+
+        # Используем класс PredictionManager
         prediction_manager = PredictionManager(model_id=last_model_id)
+
+        # Пытаемся загрузить модель
+        model_loaded = prediction_manager.load_model()
+        if not model_loaded:
+            error_msg = "Не удалось загрузить модель из MinIO"
+            print(f"ERROR: {error_msg}")
+            return {"status": "error", "message": error_msg}
+
+        print("DEBUG: Модель успешно загружена, выполняем предсказание...")
+
         results = prediction_manager.make_prediction(
             num_x_points=params.num_x_points,
             prediction_time=params.prediction_time
         )
 
+        print(f"DEBUG: Результаты предсказания: статус = {results.get('status')}")
+        if results.get('status') == 'success':
+            print(f"DEBUG: График создан успешно")
+        else:
+            print(f"DEBUG: Ошибка предсказания: {results.get('message')}")
+
         return results
 
     except Exception as e:
-        error_msg = f"Ошибка при предсказании: {str(e)}"
-        print(error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
-
-    except Exception as e:
-        error_msg = f"Ошибка при предсказании: {str(e)}"
-        print(error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
+        error_msg = f"Неожиданная ошибка при предсказании: {str(e)}"
+        print(f"ERROR: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": error_msg}

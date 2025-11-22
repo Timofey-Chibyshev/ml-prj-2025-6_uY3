@@ -260,6 +260,7 @@ async def make_prediction(
         })
 
     prediction_results = None
+    ml_results = None
 
     try:
         # Подготавливаем данные для ML сервиса
@@ -277,7 +278,17 @@ async def make_prediction(
             )
 
         if response.status_code == 200:
+
             prediction_results = response.json()
+
+            print(f"Получены результаты предсказания: статус {prediction_results.get('status')}")
+            print(f"Есть ли график: {'prediction_plot' in prediction_results}")
+
+            if 'prediction_plot' in prediction_results and prediction_results['prediction_plot']:
+                print(f"Длина данных графика: {len(prediction_results['prediction_plot'])}")
+
+            #message = f"Предсказание успешно построено! {num_x_points} точек при t={prediction_time}"
+
             message = f"Предсказание успешно построено! {num_x_points} точек при t={prediction_time}"
             message_type = "success"
         else:
@@ -296,7 +307,7 @@ async def make_prediction(
         "message": message,
         "message_type": message_type,
         "data_loaded": data_loaded,
-        "ml_results": None,
+        "ml_results": ml_results,
         "prediction_results": prediction_results,
         "last_model_id": last_model_id
     })
