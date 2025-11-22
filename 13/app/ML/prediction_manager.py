@@ -68,7 +68,7 @@ class PredictionManager:
             return False
 
 
-    @staticmethod
+
     def get_domain_bounds(self, original_data):
         """Получение границ области данных"""
         x_min = float(original_data['x'].min())
@@ -201,8 +201,8 @@ class PredictionManager:
 
             # Создаем график с помощью визуализатора
             plot_data = self.visualizer.create_prediction_plot(
-                x_points=x_points,
-                predictions=predictions,
+                x_points,
+                predictions,
                 boundary_x=boundary_points['x'].values if not boundary_points.empty else None,
                 boundary_true=boundary_points['value'].values if not boundary_points.empty else None,
                 boundary_pred=boundary_predictions.flatten() if boundary_predictions is not None else None
