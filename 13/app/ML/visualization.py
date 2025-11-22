@@ -14,14 +14,14 @@ class TrainingVisualizer:
         self.pde_losses = []
 
     def add_epoch_data(self, epoch: int, total_loss: float, data_loss: float, pde_loss: float):
-        """Добавление данных эпохи для построения графика"""
+
         self.epochs.append(epoch)
         self.total_losses.append(total_loss)
         self.data_losses.append(data_loss)
         self.pde_losses.append(pde_loss)
 
     def create_training_plot(self) -> str:
-        """Создание графика обучения в base64 формате"""
+
         if not self.epochs:
             return None
 
@@ -54,7 +54,7 @@ class TrainingVisualizer:
         return f"data:image/png;base64,{image_base64}"
 
     def get_training_stats(self) -> Dict:
-        """Получение статистики обучения"""
+
         if not self.epochs:
             return {}
 
@@ -70,7 +70,7 @@ class TrainingVisualizer:
 
 
 class PredictionVisualizer:
-    """Класс для визуализации предсказаний модели"""
+
 
     def create_prediction_plot(
             self,
@@ -83,87 +83,40 @@ class PredictionVisualizer:
             boundary_pred: Optional[np.ndarray] = None,
             figsize: tuple = (12, 8)
     ) -> str:
-        """
-        Создание графика предсказания с заливкой под кривой
 
-        Args:
-            x_points: Массив x координат
-            predictions: Массив предсказанных значений
-            prediction_time: Время предсказания
-            num_x_points: Количество точек по X
-            boundary_x: x координаты граничных точек (опционально)
-            boundary_true: Истинные значения граничных точек (опционально)
-            boundary_pred: Предсказанные значения граничных точек (опционально)
-            figsize: Размер графика
-
-        Returns:
-            Base64 строка с изображением графика
-        """
         try:
             plt.figure(figsize=figsize)
 
             # Заливка под кривой предсказания
-            plt.fill_between(
-                x_points.flatten(),
-                predictions.flatten(),
-                alpha=0.3,
-                color='deepskyblue',
-                label='Область предсказания'
-            )
+            plt.fill_between( x_points.flatten(), predictions.flatten(), alpha=0.3, color='deepskyblue', label='Область предсказания')
+
 
             # Основное предсказание
-            plt.plot(
-                x_points,
-                predictions,
-                'b-',
-                linewidth=2,
-                label='Предсказание PINN'
-            )
+            plt.plot( x_points, predictions,'b-', linewidth=2, label='Предсказание PINN')
+
 
             # Граничные точки, если переданы
-            if (boundary_x is not None and
-                    boundary_true is not None and
-                    boundary_pred is not None):
+            if (boundary_x is not None and boundary_true is not None and boundary_pred is not None):
 
                 # Фактические граничные точки
-                plt.scatter(
-                    boundary_x,
-                    boundary_true,
-                    color='red',
-                    s=80,
-                    alpha=0.8,
-                    label='Граничные точки (данные)',
-                    zorder=5
-                )
+                plt.scatter(boundary_x, boundary_true, color='red', s=80, alpha=0.8, label='Граничные точки (исх. данные)', zorder=5)
 
                 # Предсказания для граничных точек
-                plt.scatter(
-                    boundary_x,
-                    boundary_pred,
-                    color='green',
-                    s=80,
-                    alpha=0.8,
-                    label='Предсказания для граничных точек',
-                    zorder=5,
-                    marker='s'
-                )
+                plt.scatter(boundary_x, boundary_pred, color='green', s=80, alpha=0.8, label='Предсказания для граничных точек', zorder=5, marker='s')
+
+
 
                 # Линии разницы между фактическими и предсказанными значениями
                 for i, (x_val, true_val, pred_val) in enumerate(zip(
                         boundary_x, boundary_true, boundary_pred
                 )):
-                    plt.plot(
-                        [x_val, x_val],
-                        [true_val, pred_val],
-                        'r--',
-                        linewidth=2,
-                        alpha=0.7,
-                        label='Ошибка' if i == 0 else ""
-                    )
+                    plt.plot([x_val, x_val], [true_val, pred_val], 'r--', linewidth=2, alpha=0.7, label='Ошибка' if i == 0 else "")
+
+
+
 
             # Устанавливаем заголовок и подписи осей
-            plt.title(f'Предсказание модели в момент времени t = {prediction_time} ({num_x_points} точек)',
-                     fontsize=14, fontweight='bold')
+            plt.title(f'Предсказание модели в момент времени t = {prediction_time} ({num_x_points} точек)')
             plt.xlabel('x', fontsize=12)
             plt.ylabel(f'S(x, t={prediction_time})', fontsize=12)
             plt.grid(True, alpha=0.3)
@@ -193,40 +146,15 @@ class PredictionVisualizer:
             num_x_points: int,
             figsize: tuple = (12, 8)
     ) -> str:
-        """
-        Создание графика сравнения предсказаний с истинными значениями
 
-        Args:
-            x_points: Массив x координат
-            predictions: Массив предсказанных значений
-            true_values: Массив истинных значений
-            prediction_time: Время предсказания
-            num_x_points: Количество точек по X
-            figsize: Размер графика
-
-        Returns:
-            Base64 строка с изображением графика
-        """
         try:
             plt.figure(figsize=figsize)
 
             # Истинные значения
-            plt.plot(
-                x_points,
-                true_values,
-                'g-',
-                linewidth=2,
-                label='Истинные значения'
-            )
+            plt.plot(x_points, true_values, 'g-', linewidth=2, label='Истинные значения')
 
             # Предсказания
-            plt.plot(
-                x_points,
-                predictions,
-                'b--',
-                linewidth=2,
-                label='Предсказания PINN'
-            )
+            plt.plot(x_points, predictions, 'b--', linewidth=2, label='Предсказания PINN')
 
             # Область разницы
             plt.fill_between(

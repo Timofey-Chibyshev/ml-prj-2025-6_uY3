@@ -2,27 +2,30 @@ import tensorflow as tf
 import math
 import io
 import os
-from minio import Minio
+from Minio_Client import minio_client
 import tempfile
 
-def get_minio_client():
-    return Minio(
-        os.getenv("MINIO_ENDPOINT", "minio-service:9000"),
-        access_key=os.getenv("MINIO_ACCESS_KEY", "admin"),
-        secret_key=os.getenv("MINIO_SECRET_KEY", "admin123"),
-        secure=False
-    )
+#def get_minio_client():
+##    return Minio(
+#        os.getenv("MINIO_ENDPOINT", "minio-service:9000"),
+#        access_key=os.getenv("MINIO_ACCESS_KEY", "admin"),
+#        secret_key=os.getenv("MINIO_SECRET_KEY", "admin123"),
+#        secure=False
+#    )
 
 
-def save_model_to_minio(model, model_id):
-    """Сохраняет модель в MinIO"""
+def save_model_to_minio(model, model_id, minion_client=minio_client):
+
     try:
-        # Создаем временный файл с правильным расширением
+        # Создаем временный файл
         with tempfile.NamedTemporaryFile(suffix='.keras', delete=False) as tmp_file:
             tmp_path = tmp_file.name
 
+
         # Сохраняем модель во временный файл
         model.u_model.save(tmp_path)
+
+
 
         # Читаем содержимое файла
         with open(tmp_path, 'rb') as f:
@@ -33,7 +36,10 @@ def save_model_to_minio(model, model_id):
         model_buffer.seek(0)
 
         # Получаем клиент MinIO
-        minio_client = get_minio_client()
+        #minio_client = get_minio_client()
+
+
+
 
         # Создаем бакет если не существует
         bucket_name = "models"
@@ -54,6 +60,8 @@ def save_model_to_minio(model, model_id):
         print(f"Модель сохранена в MinIO с ID: {model_id}")
         return True
 
+
+
     except Exception as e:
         print(f"Ошибка при сохранении модели в MinIO: {e}")
         # Убедимся, что временный файл удален даже при ошибке
@@ -65,14 +73,15 @@ def save_model_to_minio(model, model_id):
         return False
 
 
-def load_model_from_minio(model_id):
-    """Загружает модель из MinIO"""
+def load_model_from_minio(model_id, minio_client=minio_client):
     try:
-        minio_client = get_minio_client()
+        #minio_client = minio_client
 
         # Получаем модель из MinIO
         response = minio_client.get_object("models", f"{model_id}.keras")
         model_data = response.read()
+
+
 
         # Создаем временный файл для загрузки
         with tempfile.NamedTemporaryFile(suffix='.keras', delete=False) as tmp_file:
@@ -87,6 +96,7 @@ def load_model_from_minio(model_id):
 
         print(f"Модель загружена из MinIO с ID: {model_id}")
         return model
+
 
     except Exception as e:
         print(f"Ошибка при загрузке модели из MinIO: {e}")

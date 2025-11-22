@@ -1,6 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 import sys
@@ -10,7 +9,7 @@ import httpx
 #import shutil
 import glob
 from datetime import datetime
-from minio import Minio
+from DataManage.Minio_Client import minio_client
 import io
 #import uuid
 
@@ -20,12 +19,15 @@ app = FastAPI(title="CSV Uploader and ML Runner")
 ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "http://ml-service:8001")
 
 # Инициализация MinIO клиента
-minio_client = Minio(
-    os.getenv("MINIO_ENDPOINT", "minio-service:9000"),
-    access_key=os.getenv("MINIO_ACCESS_KEY", "admin"),
-    secret_key=os.getenv("MINIO_SECRET_KEY", "admin123"),
-    secure=False
-)
+#minio_client = Minio(
+#    os.getenv("MINIO_ENDPOINT", "minio-service:9000"),
+##    access_key=os.getenv("MINIO_ACCESS_KEY", "admin"),
+#   secret_key=os.getenv("MINIO_SECRET_KEY", "admin123"),
+#    secure=False
+#)
+
+minio_client = minio_client
+
 
 # Добавляем путь к родительской директории для импорта модулей
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -339,7 +341,7 @@ async def get_ml_status():
 
 @app.get("/download_model")
 async def download_model():
-    """Скачивание последней обученной модели из MinIO"""
+
     global last_model_id
 
     if not last_model_id:
