@@ -1,15 +1,17 @@
 import numpy as np
-from preprocess_dataset import target_height, target_width
-from model import IamSentencesCRNN
+from .preprocess_dataset import target_height, target_width
+from .model import IamSentencesCRNN
 import torch
+import os
 
 class IamSentencesDataLoader(object):
     def __init__(self):
-        self.training_images_filepath = "dataset/train-images.idx3-ubyte"
-        self.training_labels_filepath = "dataset/train-labels.idx1-U128"
-        self.test_images_filepath = "dataset/t10k-images.idx3-ubyte"
-        self.test_labels_filepath = "dataset/t10k-labels.idx1-U128"
-        self.model_filepath = "model/iam_sentences_crnn.ckpt"
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.training_images_filepath = os.path.join(script_dir, "dataset/train-images.idx3-ubyte")
+        self.training_labels_filepath = os.path.join(script_dir, "dataset/train-labels.idx1-U128")
+        self.test_images_filepath = os.path.join(script_dir, "dataset/t10k-images.idx3-ubyte")
+        self.test_labels_filepath = os.path.join(script_dir, "dataset/t10k-labels.idx1-U128")
+        self.model_filepath = os.path.join(script_dir, "model/iam_sentences_crnn.ckpt")
 
     @staticmethod
     def load_images(path):
@@ -42,6 +44,6 @@ class IamSentencesDataLoader(object):
             return model
         except FileNotFoundError:
             print(f"No {self.model_filepath} file exists!\n")
-            raise FileNotFoundError
+            raise FileNotFoundError("No model file exists!\n")
 
 loader = IamSentencesDataLoader()

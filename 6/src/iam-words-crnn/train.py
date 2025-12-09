@@ -33,7 +33,6 @@ def train_model(model, criterion, optimizer, x_train, y_train, x_test, y_test, b
             outputs = model(images)
             loss = criterion(outputs, labels)
             training_loss += loss.item()
-            #loss_list.append(loss.item())
 
             # Обратное распространение и оптимизатор
             optimizer.zero_grad()

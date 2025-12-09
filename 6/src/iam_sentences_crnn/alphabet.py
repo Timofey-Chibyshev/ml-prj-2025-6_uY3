@@ -1,9 +1,13 @@
 import numpy as np
 import itertools
+import os
 
 def load_alphabet():
     alphabet = ""
-    with open("dataset/alphabet.txt", "r") as file:
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    alphabet_path = os.path.join(script_dir, "dataset", "alphabet.txt")
+    with open(alphabet_path, "r") as file:
         alphabet = file.read()
     return alphabet.strip()
 
