@@ -1,8 +1,8 @@
-from data_loader import loader
+from .data_loader import loader
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from alphabet import greedy_ctc_decoder
+from .alphabet import greedy_ctc_decoder
 import random
 
 nrows = 5

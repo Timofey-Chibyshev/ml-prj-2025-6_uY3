@@ -1,9 +1,11 @@
 import cv2
 import math
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
-target_height = 64
-target_chunk_width = 8
+target_height = 32
+target_chunk_width = 4
 target_chunks = 140
 target_width = target_chunks * target_chunk_width
 
@@ -13,6 +15,8 @@ train_portion = 0.85
 
 seed = 13548613
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 def preprocess_dataset():
     x_images = np.empty((num_elems_guaranteed, target_height, target_width), dtype=np.uint8)
     y_labels = np.empty((num_elems_guaranteed,), dtype="<U128")
@@ -20,7 +24,7 @@ def preprocess_dataset():
 
     lines_read = 0
     images_preprocessed = 0
-    with open("dataset-raw/metadata/sentences.txt", 'r') as txtfile:
+    with open(os.path.join(script_dir, "dataset-raw", "metadata", "sentences.txt"), 'r') as txtfile:
         for (line_idx, line) in enumerate(txtfile):
             if line.startswith("#"):
                 continue
@@ -34,7 +38,7 @@ def preprocess_dataset():
                 continue
 
             filename = f"{path}.png"
-            path = f"dataset-raw/dataset/{filename}"
+            path = os.path.join(script_dir, "dataset-raw", "dataset", filename)
 
             try:
                 image = preprocess_sentence_png(path, graylevel)
@@ -80,13 +84,13 @@ def preprocess_dataset():
     x_test = x_images[train_count:]
     y_test = y_labels[train_count:]
 
-    x_train.tofile("dataset/train-images.idx3-ubyte")
-    y_train.tofile("dataset/train-labels.idx1-U128")
-    x_test.tofile("dataset/t10k-images.idx3-ubyte")
-    y_test.tofile("dataset/t10k-labels.idx1-U128")
+    x_train.tofile(os.path.join(script_dir, "dataset", "train-images.idx3-ubyte"))
+    y_train.tofile(os.path.join(script_dir, "dataset", "train-labels.idx1-U128"))
+    x_test.tofile(os.path.join(script_dir, "dataset", "t10k-images.idx3-ubyte"))
+    y_test.tofile(os.path.join(script_dir, "dataset", "t10k-labels.idx1-U128"))
 
     alphabet = "".join(sorted(list(alphabet)))
-    with open("dataset/alphabet.txt", "w") as alphabet_file:
+    with open(os.path.join(script_dir, "dataset", "alphabet.txt"), "w") as alphabet_file:
         alphabet_file.write(alphabet)
 
     print("Done!")
@@ -100,23 +104,54 @@ def preprocess_sentence_png(path, graylevel=None):
     image = cv2.imread(path)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
-    rows, cols = image.shape
-    factor = target_height / rows
-    image = cv2.resize(image, None, fx=factor, fy=factor, interpolation=cv2.INTER_AREA)
+    plt.imshow(image, cmap="gray")
+    plt.show()
 
     image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
     if graylevel is None:
         _ret, image = cv2.threshold(image, 0, 255, type=cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     else:
         _ret, image = cv2.threshold(image, graylevel, 255, type=cv2.THRESH_BINARY)
+
+    plt.imshow(image, cmap="gray")
+    plt.show()
+    
     image = cv2.bitwise_not(image)
+
+    plt.imshow(image, cmap="gray")
+    plt.show()
+
+    # Cropping image
+    while np.sum(image[0]) == 0:
+        image = image[1:]
+    while np.sum(image[:,0]) == 0:
+        image = np.delete(image,0,1)
+    while np.sum(image[-1]) == 0:
+        image = image[:-1]
+    while np.sum(image[:,-1]) == 0:
+        image = np.delete(image,-1,1)
+
+    rows, cols = image.shape
+    factor = target_height / rows
+    image = cv2.resize(image, None, fx=factor, fy=factor, interpolation=cv2.INTER_AREA)
 
     rows, cols = image.shape
     if cols > target_width:
-        raise TooWidePicError
+        cols_mismatch = math.ceil((cols - target_width) / 2.0)
+        rows_mismatch = math.ceil(cols_mismatch * target_height / target_width)
+        image = np.pad(image, ((rows_mismatch, rows_mismatch), (0, 0)), 'constant')
+
+        rows, cols = image.shape
+        factor = target_height / rows
+        image = cv2.resize(image, None, fx=factor, fy=factor, interpolation=cv2.INTER_AREA)
+
+        rows, cols = image.shape
 
     colsPadding = int(math.ceil((target_width - cols) / 2.0)), int(math.floor((target_width - cols) / 2.0))
     image = np.pad(image, ((0, 0), colsPadding), 'constant')
+
+    plt.imshow(image, cmap="gray")
+    plt.show()
 
     return image
 
