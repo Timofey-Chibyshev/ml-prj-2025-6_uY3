@@ -1,7 +1,10 @@
 from torch import nn
 import torch
-from alphabet import alphabet
-from preprocess_dataset import target_chunks
+from .alphabet import alphabet, greedy_ctc_decoder, ints_to_chars
+from .preprocess_dataset import target_chunks
+import numpy as np
+
+import Levenshtein as lev
 
 class MyCTCLoss(nn.Module):
     def __init__(self): 
@@ -26,3 +29,21 @@ class MyCTCLoss(nn.Module):
         inputsT = torch.transpose(inputs, 0, 1)
         loss = nn.CTCLoss(blank=len(alphabet))
         return loss(inputsT, targets_flat, input_lengths, target_lengths)
+    
+class MyCERAccuracy(nn.Module):
+    def __init__(self): 
+        super(MyCERAccuracy, self).__init__()  
+    
+    def forward(self, inputs, targets):
+        nsamples = inputs.size(0)
+        cers = np.zeros((nsamples,), dtype=np.float64)
+        for (idx, sample) in enumerate(inputs):
+            target = targets[idx]
+            target = ints_to_chars(target).replace('+','')
+
+            _, indices = torch.max(sample, 1)
+            sentence = greedy_ctc_decoder(indices)
+
+            cers[idx] = lev.distance(target, sentence) / len(target)
+        
+        return (1.0 - np.mean(cers)) * 100.0
