@@ -1,0 +1,5 @@
+.venv
+.vscode
+*.joblib
+*.csv
+__pycache__/
