@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дневник эмоций</title>
+    <link rel="icon" type="image/x-icon" href="cat.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📔 Дневник эмоций</h1>
+            <p>Отслеживай свои чувства и смотри, как они меняются</p>
+        </header>
+
+        <div id="successMsg" class="message success"></div>
+        <div id="errorMsg" class="message error"></div>
+
+        <div class="main-grid">
+            <!-- Left: Entry Form -->
+            <div class="card">
+                <h2>💭 Поделиться настроением</h2>
+                
+                <div class="form-group">
+                    <label for="entryText">Как прошел твой день? Опиши свои чувства:</label>
+                    <textarea id="entryText" placeholder="Пиши свободно, без стеснения..."></textarea>
+                </div>
+
+                <button class="btn" id="analyzeBtn" onclick="analyzeEntry()">
+                    <span id="analyzeText">Анализировать</span>
+                </button>
+
+                <div id="emotionResult" class="emotion-result">
+                    <div style="font-size: 0.9em; color: var(--color-text-secondary); margin-bottom: var(--spacing-sm);">
+                        Вот что я определил:
+                    </div>
+                    <div class="emotion-large" id="resultEmoji"></div>
+                    <div class="emotion-label" id="resultLabel"></div>
+             
+                    <!-- источник предсказания (AI или локальный) -->
+                    <div id="resultSource"
+                         style="display:none; font-size: 0.8em; color: var(--color-text-secondary); margin-top: 4px;">
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md); text-align: left;">
+                        <div style="font-size: 0.85em; color: var(--color-text-secondary); margin-bottom: var(--spacing-sm);">
+                            Выбери нужную эмоцию:
+                        </div>
+                        <div class="emotion-buttons" id="emotionButtons"></div>
+                    </div>
+
+                    <button class="btn" style="width: 100%; margin-top: var(--spacing-md);" onclick="saveEntry()">
+                        ✅ Сохранить запись
+                    </button>
+                </div>
+
+                <div id="entriesSection">
+                    <h3 style="margin-top: var(--spacing-lg); font-size: 1.1em; color: var(--color-text-primary);">
+                        📝 Последние записи
+                    </h3>
+                    <div class="entries-list" id="entriesList"></div>
+                </div>
+            </div> 
+
+            <!-- Right: Statistics & Chart -->
+            <div class="card">
+                <h2>📈 Статистика за 30 дней</h2>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('chart')">График</button>
+                    <button class="tab-btn" onclick="switchTab('stats')">Статистика</button>
+                    <button class="tab-btn" onclick="switchTab('archive')">Архив</button>
+                </div>
+
+                <div id="chart" class="tab-content active">
+                    <div class="chart-container">
+                        <canvas id="emotionChart"></canvas>
+                    </div>
+                </div> 
+
+                <div id="stats" class="tab-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalEntries">0</div>
+                            <div class="stat-label">Записей</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="topEmotion">—</div>
+                            <div class="stat-label">Частая эмоция</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="lastEntry">—</div>
+                            <div class="stat-label">Последняя эмоция</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-lg);">
+                        <h3 style="font-size: 1em; margin-bottom: var(--spacing-md);">Распределение эмоций</h3>
+                        <div id="emotionDistribution"></div>
+                    </div>
+                </div>
+
+                <div id="archive" class="tab-content">
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                            <div>
+                                <label style="font-size: 0.9em;">Эмоция:</label>
+                                <select id="emotionFilter" onchange="filterArchive()" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--radius-base);">
+                                    <option value="">Все эмоции</option>
+                                    <option value="happiness">😊 Радость</option>
+                                    <option value="sadness">😢 Грусть</option>
+                                    <option value="hatred">😠 Ненависть</option>
+                                    <option value="boredom">😑 Скука</option>
+                                    <option value="love">❤️ Любовь</option>
+                                    <option value="pleasure">😋 Удовольствие</option>
+                                    <option value="enthusiasm">🔥 Энтузиазм</option>
+                                    <option value="relief">😌 Облегчение</option>
+                                    <option value="surprise">😲 Удивление</option>
+                                    <option value="calmness">😇 Спокойствие</option>
+                                    <option value="worry">😰 Беспокойство</option>
+                                    <option value="emptiness">🌑 Пустота</option>
+                                    <option value="anger">😡 Гнев</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9em;">Сортировка:</label>
+                                <select id="sortFilter" onchange="filterArchive()" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--radius-base);">
+                                    <option value="newest">Новые в начале</option>
+                                    <option value="oldest">Старые в начале</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9em;">На странице:</label>
+                                <select id="perPageFilter" onchange="filterArchive()" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--radius-base);">
+                                    <option value="10">10 записей</option>
+                                    <option value="20">20 записей</option>
+                                    <option value="50">50 записей</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="archiveList" style="max-height: 500px; overflow-y: auto; margin-bottom: var(--spacing-md);"></div>
+
+                    <div id="pagination" style="display: flex; gap: var(--spacing-sm); justify-content: center; flex-wrap: wrap;"></div>
+
+                    <p id="archiveStats" style="text-align: center; color: var(--color-text-secondary); font-size: 0.9em; margin-top: var(--spacing-md);"></p>
+                </div>
+
+                <button class="btn btn-secondary" style="width: 100%; margin-top: var(--spacing-lg);" onclick="clearAllData()">
+                    🗑️ Очистить все данные
+                </button>
+            </div>
+        </div>
+    </div> 
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
