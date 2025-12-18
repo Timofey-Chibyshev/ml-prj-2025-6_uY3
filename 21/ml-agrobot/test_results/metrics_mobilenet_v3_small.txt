@@ -1,0 +1,26 @@
+Модель: mobilenet_v3_small
+Файл модели: models/best_mobilenet_v3_small.pt
+Классы: ['BrownRust', 'Healthy', 'LeafBlight', 'Mildew', 'Septoria', 'WheatBlast', 'YellowRust']
+Количество тестовых образцов: 1406
+
+Метрики:
+Accuracy: 0.9452
+Precision: 0.9459
+Recall: 0.9452
+F1-Score: 0.9448
+Cohen's Kappa: 0.9360
+
+Classification Report:
+              precision    recall  f1-score   support
+
+   BrownRust       0.96      0.96      0.96       211
+     Healthy       0.98      0.94      0.96       207
+  LeafBlight       0.90      0.81      0.85       187
+      Mildew       0.91      0.98      0.95       187
+    Septoria       0.90      0.97      0.93       225
+  WheatBlast       0.97      0.98      0.97       158
+  YellowRust       1.00      0.97      0.98       231
+
+    accuracy                           0.95      1406
+   macro avg       0.95      0.94      0.94      1406
+weighted avg       0.95      0.95      0.94      1406
