@@ -1,0 +1,11 @@
+aiogram==3.*
+SQLAlchemy==2.0.25
+aiosqlite
+alembic
+Pillow
+numpy<2
+
+
+torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu
+torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cpu
+torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cpu

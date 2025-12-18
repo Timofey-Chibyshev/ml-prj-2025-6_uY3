@@ -1,0 +1,13 @@
+services:
+  agro-bot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: agro_bot
+    restart: always
+    env_file:
+      - ../.env
+    volumes:
+      - ../models:/app/models
+      - ../data:/app/data
+    command: python bot.py

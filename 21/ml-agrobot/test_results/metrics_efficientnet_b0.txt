@@ -1,0 +1,26 @@
+Модель: efficientnet_b0
+Файл модели: models/best_efficientnet_b0.pt
+Классы: ['BrownRust', 'Healthy', 'LeafBlight', 'Mildew', 'Septoria', 'WheatBlast', 'YellowRust']
+Количество тестовых образцов: 1406
+
+Метрики:
+Accuracy: 0.9573
+Precision: 0.9578
+Recall: 0.9573
+F1-Score: 0.9566
+Cohen's Kappa: 0.9501
+
+Classification Report:
+              precision    recall  f1-score   support
+
+   BrownRust       0.96      0.97      0.96       211
+     Healthy       0.95      0.98      0.97       207
+  LeafBlight       0.96      0.82      0.88       187
+      Mildew       0.95      0.98      0.97       187
+    Septoria       0.92      0.98      0.95       225
+  WheatBlast       0.97      0.99      0.98       158
+  YellowRust       0.99      0.98      0.98       231
+
+    accuracy                           0.96      1406
+   macro avg       0.96      0.96      0.96      1406
+weighted avg       0.96      0.96      0.96      1406
